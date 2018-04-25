@@ -4,10 +4,11 @@ namespace api\modules\v1\controllers;
 
 use api\modules\v1\models\FollowUsr;
 use api\modules\v1\models\LoginForm;
-use api\modules\v1\models\User;
 use api\modules\v1\models\ServerResponse;
+use api\modules\v1\models\User;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
+use yii\filters\Cors;
 
 class UserController extends \yii\rest\ActiveController
 {
@@ -21,43 +22,54 @@ class UserController extends \yii\rest\ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+
+        unset($behaviors['authenticator']);
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
-            'optional' => ['auth', 'create'],
+            'optional' => ['auth', 'register'],
+            'except'=> ['options']
         ];
 
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'auth' => ['POST'],
-                'create' => ['POST'],
-                'view' => ['GET'],
-                'update' => ['PUT', 'POST'],
-                'my-comments' => ['GET'],
-                'my-stats' => ['GET'],
-                'follow-user' => ['POST'],
-                'unfollow-user' => ['POST'],
+                'auth' => ['POST', 'OPTIONS'],
+                'register' => ['POST', 'OPTIONS'],
+                'view-model' => ['GET', 'OPTIONS'],
+                'profile' => ['GET', 'OPTIONS'],
+                'update' => ['PUT', 'POST', 'OPTIONS'],
+                'my' => ['GET', 'OPTIONS'],
+                'my-comments' => ['GET', 'OPTIONS'],
+                'my-stats' => ['GET', 'OPTIONS'],
+                'follow-user' => ['POST', 'OPTIONS'],
+                'unfollow-user' => ['POST', 'OPTIONS'],
+                '*' => ['OPTIONS'],
             ],
         ];
-        /*
-        $behaviors['corsFilter'] = [
-        'class' => Cors::className(),
-        'cors' => [
-        'Origin' => ['*'],
-        'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-        'Access-Control-Request-Headers' => ['*'],
-        'Access-Control-Allow-Credentials' => true,
-        ],
-        ];
-         */
+
         return $behaviors;
     }
+
+
 
     public function actions()
     {
         $actions = parent::actions();
 
-        unset($actions['delete'], $actions['create'], $actions['update'], $actions['view']);
+        unset($actions['delete'], $actions['create'], $actions['update'], $actions['view'], $actions['index']);
+        
         return $actions;
     }
 
@@ -71,38 +83,15 @@ class UserController extends \yii\rest\ActiveController
 
         $model->attributes = Yii::$app->request->bodyParams;
         if ($user = $model->login()) {
-            return ['token' => $user->token, 'id' => $user->id, 'name' => $user->name];
+            return $user;
         } else {
             return $model;
         }
-
-        /*
-    $response = [];
-    $params = Yii::$app->request->bodyParams; // Send data from xxx-form-url-encoded
-
-    if (isset($params['username']) && isset($params['password'])) {
-    $username = $params['username'];
-    $password = $params['password'];
-
-    if ($u = User::findOne(['username' => $username])) {
-    if ($u->password == md5($password)) { //o crypt, según esté en la BD
-    $response = ['token' => $u->token, 'id' => $u->id, 'name' => $u->name];
-    }
-    } else {
-    $response = ['error' => 'Usuario incorrecto. ' . $username];
-    }
-    // Return error message no auth request
-    } else {
-    $response['message'] = "Debes especificar un nombre de usuario y una contraseña";
-    }
-    return $response;
-     */
     }
 
-    public function actionView($id)
+    public function actionViewModel($id)
     {
         $response = [];
-
         if ($model = User::findOne(['id' => $id])) {
             $model->scenario = User::SCENARIO_VIEW;
 
@@ -133,7 +122,7 @@ class UserController extends \yii\rest\ActiveController
         return "OK";
     }
 
-    public function actionCreate()
+    public function actionRegister()
     {
         if (!Yii::$app->user->isGuest) {
             return new ServerResponse(12);
@@ -152,6 +141,7 @@ class UserController extends \yii\rest\ActiveController
 
         if ($user->validate()) {
             $user->save(false);
+            return $user;
         } else {
             return new ServerResponse(5, $user->errors);
         }
@@ -172,7 +162,7 @@ class UserController extends \yii\rest\ActiveController
             if (!$user->validateModifiedPassword()) { // If passwords are not valid
                 return new ServerResponse(5, $user->errors);
             }
-            
+
             $user->password = Yii::$app->security->generatePasswordHash($user->password);
         }
 
@@ -197,7 +187,7 @@ class UserController extends \yii\rest\ActiveController
 
     public function actionFollowUser($id)
     {
-        
+
         $user = Yii::$app->user->identity;
         if ($followed = User::findOne(['id' => $id])) {
             if (!$model = FollowUsr::findOne(['follower' => $user->id, 'followed' => $id])) {
@@ -214,7 +204,7 @@ class UserController extends \yii\rest\ActiveController
             return new ServerResponse(34);
         }
 
-        return new ServerResponse(1);   // This means user is following the specified user (no changes needed)
+        return new ServerResponse(1); // This means user is following the specified user (no changes needed)
 
     }
 
@@ -227,7 +217,7 @@ class UserController extends \yii\rest\ActiveController
             }
         }
 
-        return new ServerResponse(1);   // This means user is not following the user actually or unfollow successfully
+        return new ServerResponse(1); // This means user is not following the user actually or unfollow successfully
     }
 
 }

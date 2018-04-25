@@ -8,9 +8,11 @@ use api\modules\v1\models\Tvshow;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\rest\ActiveController;
+use yii\filters\Cors;
 
 class TvshowController extends ActiveController
 {
+    public $enableCsrfValidation = false;
     public $modelClass = 'api\modules\v1\models\Tvshow';
     public $serializer = [
         'class' => 'yii\rest\Serializer',
@@ -23,21 +25,40 @@ class TvshowController extends ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+        unset($behaviors['authenticator']);
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => Cors::className(),
+            'cors' => [
+                'Origin' => ['http://localhost:8100, *'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
+            'except' => ['options'],
         ];
+
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'index' => ['GET'],
-                'add' => ['POST'],
-                'view' => ['GET'],
-                'follow' => ['POST'],
-                'unfollow' => ['POST'],
-                'view-comments' => ['GET'],
-                'list-season' => ['GET'],
-                'watch-season' => ['POST'],
-                'unwatch-season' => ['POST'],
+                'get' => ['POST', 'OPTIONS'],
+                'view-model' => ['GET', 'OPTIONS'],
+                'last-comments' => ['GET', 'OPTIONS'],
+                'platforms' => ['GET', 'OPTIONS'],
+                'follow' => ['POST', 'OPTIONS'],
+                'unfollow' => ['POST', 'OPTIONS'],
+                'view-comments' => ['GET', 'OPTIONS'],
+                'comment' => ['POST', 'OPTIONS'],
+                'to-watch' => ['GET', 'OPTIONS'],
+                'list-season' => ['GET', 'OPTIONS'],
+                'watch-season' => ['POST', 'OPTIONS'],
+                'unwatch-season' => ['POST', 'OPTIONS'],
+                '*' => ['OPTIONS']
             ],
         ];
         return $behaviors;
@@ -103,7 +124,7 @@ class TvshowController extends ActiveController
 
     }
 
-    public function actionView($id)
+    public function actionViewModel($id)
     {
         if (!$tvshow = Tvshow::findOne($id)) {
             return new ServerResponse(34);
@@ -121,23 +142,8 @@ class TvshowController extends ActiveController
 
         return $response;
     }
-/*
-public function actionGetData($id)
-{
-if (!$tvshow = Tvshow::findOne($id)) {
-return new ServerResponse(34);
-}
-
-if ($model->needsUpdate()) {
-if (!$model = $this->updateCache($model->id)) {
-return new ServerResponse(10);
-}
-}
-
-return $model->cache;
-}
- */
-    public function actionGetLastcomments($id)
+    
+    public function actionLastcomments($id)
     {
         if (!$tvshow = Tvshow::findOne($id)) {
             return new ServerResponse(34);
@@ -154,9 +160,6 @@ return $model->cache;
 
         return $tvshow->title->platformLinks;
     }
-
-
-
 
     public function actionFollow($id)
     {
@@ -185,7 +188,7 @@ return $model->cache;
     {
         if (!$model = Tvshow::findOne(['id' => $id])) {
             return new ServerResponse(34);
-        } 
+        }
         return $model->title->comments;
     }
 

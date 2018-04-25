@@ -16,23 +16,38 @@ class MovieController extends ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+        unset($behaviors['authenticator']);
+
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
+            'except' => ['options'],
         ];
+
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'index' => ['GET'],
-                'add' => ['POST'],
-                'get' => ['GET'],
-                'view' => ['GET'],
-                'follow' => ['POST'],
-                'unfollow' => ['POST'],
-                'watch' => ['POST'],
-                'unwatch' => ['POST'],
-                'score' => ['POST'],
-                'view-comments' => ['GET'],
-                'comment' => ['POST'],
+                'get' => ['GET', 'OPTIONS'],
+                'view-model' => ['GET', 'OPTIONS'],
+                'follow' => ['POST', 'OPTIONS'],
+                'unfollow' => ['POST', 'OPTIONS'],
+                'watch' => ['POST', 'OPTIONS'],
+                'unwatch' => ['POST', 'OPTIONS'],
+                'score' => ['POST', 'OPTIONS'],
+                'view-comments' => ['GET', 'OPTIONS'],
+                'last-comments' => ['GET', 'OPTIONS'],
+                'platforms' => ['GET', 'OPTIONS'],
+                'to-watch' => ['GET', 'OPTIONS'],
+                'comment' => ['POST', 'OPTIONS'],
             ],
         ];
         return $behaviors;
@@ -98,7 +113,7 @@ class MovieController extends ActiveController
 
     }
 
-    public function actionView($id)
+    public function actionViewModel($id)
     {
         if (!$movie = Movie::findOne($id)) {
             return new ServerResponse(34);
@@ -111,7 +126,7 @@ class MovieController extends ActiveController
             }
         }
 
-        $response = $model->cache;
+        $response = json_decode($model->cache, true);
         //$response['last_comments'] = $model->getLastComments();
         $response['following'] = $model->isFollowedByUser();
         //$response['platforms'] = $model->platformLinks;
@@ -122,7 +137,7 @@ class MovieController extends ActiveController
         return $response;
     }
 
-    public function actionGetLastcomments($id)
+    public function actionLastcomments($id)
     {
         if (!$movie = Movie::findOne($id)) {
             return new ServerResponse(34);
@@ -182,7 +197,7 @@ class MovieController extends ActiveController
 
     public function actionUnwatch($id)
     {
-        
+
         if (!$movie = Movie::findOne($id)) { // Check if movie exists
             return new ServerResponse(34);
         }

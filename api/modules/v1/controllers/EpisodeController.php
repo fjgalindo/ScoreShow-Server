@@ -17,20 +17,34 @@ class EpisodeController extends ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+        unset($behaviors['authenticator']);
+
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
+            'except' => ['options'],
         ];
+
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'index' => ['GET'],
-                'add' => ['POST'],
-                'view' => ['GET'],
-                'watch' => ['POST'],
-                'unwatch' => ['POST'],
-                'view-comments' => ['GET'],
-                'comment' => ['POST'],
-                'list-season' => ['GET'],
+                'add' => ['POST', 'OPTIONS'],
+                'view-model' => ['GET', 'OPTIONS'],
+                'score' => ['POST', 'OPTIONS'],
+                'watch' => ['POST', 'OPTIONS'],
+                'unwatch' => ['POST', 'OPTIONS'],
+                'view-comments' => ['GET', 'OPTIONS'],
+                'comment' => ['POST', 'OPTIONS'],
+                'list-season' => ['GET', 'OPTIONS'],
             ],
         ];
 
@@ -41,12 +55,12 @@ class EpisodeController extends ActiveController
     {
         $actions = parent::actions();
         //Eliminamos acciones de crear y eliminar apuntes. Eliminamos update para personalizarla.
-        unset($actions['delete'], $actions['create'], $actions['update'], $actions['view']);
+        unset($actions['delete'], $actions['create'], $actions['update'], $actions['view'], $actions['index']);
 
         return $actions;
     }
 
-    public function actionView($id, $season, $ep)
+    public function actionViewModel($id, $season, $ep)
     {
         $response = [];
 
@@ -152,48 +166,48 @@ class EpisodeController extends ActiveController
 
     }
 /*
-    public function actionWatchSeason($id, $season)
-    {
-        $uid = Yii::$app->user->identity->id;
-        if (!$episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all()) {
-            return new ServerResponse(34);
-        }
+public function actionWatchSeason($id, $season)
+{
+$uid = Yii::$app->user->identity->id;
+if (!$episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all()) {
+return new ServerResponse(34);
+}
 
-        foreach ($episodes as $key => $episode) {
-            // If is released and I don't check it as watched
-            if ($episode->isReleased() && !$model = WatchEpisode::findOne(
-                [
-                    'user' => $uid,
-                    'tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode->episode_num,
-                ])) {
-                $model = new WatchEpisode();
-                $model->user = $uid;
-                $model->tvshow = $episode->tvshow;
-                $model->season_num = $episode->season_num;
-                $model->episode_num = $episode->episode_num;
-                $model->date = date("Y-m-d H-i-s");
+foreach ($episodes as $key => $episode) {
+// If is released and I don't check it as watched
+if ($episode->isReleased() && !$model = WatchEpisode::findOne(
+[
+'user' => $uid,
+'tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode->episode_num,
+])) {
+$model = new WatchEpisode();
+$model->user = $uid;
+$model->tvshow = $episode->tvshow;
+$model->season_num = $episode->season_num;
+$model->episode_num = $episode->episode_num;
+$model->date = date("Y-m-d H-i-s");
 
-                if (!$model->save()) {
-                    return new ServerResponse(10);
-                }
-            }
-        }
+if (!$model->save()) {
+return new ServerResponse(10);
+}
+}
+}
 
-        return new ServerResponse(1);
-    }
+return new ServerResponse(1);
+}
 
-    public function actionUnwatchSeason($id, $season)
-    {
-        $uid = Yii::$app->user->identity->id;
-        if ($episodes_watched = WatchEpisode::find()->where(['user' => $uid, 'tvshow' => $id, 'season_num' => $season])->all()) {
-            foreach ($episodes_watched as $key => $episode) {
-                $episode->delete();
-            }
-        }
+public function actionUnwatchSeason($id, $season)
+{
+$uid = Yii::$app->user->identity->id;
+if ($episodes_watched = WatchEpisode::find()->where(['user' => $uid, 'tvshow' => $id, 'season_num' => $season])->all()) {
+foreach ($episodes_watched as $key => $episode) {
+$episode->delete();
+}
+}
 
-        return new ServerResponse(1);
-    }
-*/
+return new ServerResponse(1);
+}
+ */
     public function actionListSeason($id, $season)
     {
         if ($tvshow = Tvshow::findOne($id)) {

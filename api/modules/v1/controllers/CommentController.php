@@ -16,17 +16,29 @@ class CommentController extends ActiveController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+        unset($behaviors['authenticator']);
+
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
+            'except' => ['options'],
         ];
+
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'view' => ['GET'],
-                'comment' => ['POST'],
-                'delete' => ['POST'],
-                'my' => ['GET'],
-                'answer' => ['POST'],
+                'comment' => ['POST', 'OPTIONS'],
+                'delete' => ['POST', 'OPTIONS'],
+                'answer' => ['POST', 'OPTIONS'],
             ],
         ];
 
@@ -93,7 +105,7 @@ class CommentController extends ActiveController
 
     public function actionAnswer($id)
     {
-        
+
         if (!$answered = Comment::findOne(['id' => $id])) {
             return new ServerResponse(34);
         }
@@ -108,7 +120,7 @@ class CommentController extends ActiveController
         }
 
         $answer->attributes = $fields;
-        
+
         $answer->content = $_POST['content'];
         $answer->answer_to = $id;
         $answer->author = Yii::$app->user->identity->id;

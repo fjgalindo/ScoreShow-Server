@@ -32,15 +32,6 @@ class DefaultController extends \yii\rest\ActiveController
         return $behaviors;
     }
 
-    /**
-     * Renders the index view for the module
-     * @return string
-     */
-    public function actionIndex()
-    {
-        return $this->render('index');
-    }
-
     public function actionSearchTmdb($query, $page = 1){
         if(!$query){
             return new ServerResponse(5, ['query'=>'Query text must be set']);

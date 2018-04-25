@@ -4,7 +4,7 @@ return [
             [['name', 'username', 'email', 'password'], 'required'],
             [['state'], 'integer'],
             [['created_at', 'birthdate'], 'safe'],
-            [['name'], 'string', 'max' => 30],
+            [['name'], 'string', 'max' => 60],
             [['username'], 'string', 'max' => 25],
             [['email', 'password', 'profile_img', 'background_img', 'password_reset_token'], 'string', 'max' => 255],
             [['auth_key'], 'string', 'max' => 32],
