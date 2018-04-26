@@ -8,7 +8,7 @@ return [
         'rules' => [
 
             /* === TVSHOW ROUNTING RULES === */
-            'tv/' => 'tvshow/index',
+            //'tv/' => 'tvshow/index',
             'tv/pending' => 'tvshow/to-watch',
             'tv/<id:\d+>' => 'tvshow/view-model',
             'tv/<id:\d+>/follow' => 'tvshow/follow',
