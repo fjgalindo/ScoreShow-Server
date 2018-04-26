@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS ScoreShow
+CREATE DATABASE IF NOT EXISTS scoreshow
 	DEFAULT CHARACTER SET utf8
 	DEFAULT COLLATE utf8_spanish_ci;
 
@@ -6,7 +6,7 @@ CREATE DATABASE IF NOT EXISTS ScoreShow
 		Tables definition for ScoreShow Database
 	*/
 
-USE ScoreShow;
+USE scoreshow;
 
 CREATE TABLE IF NOT EXISTS `User` (
 	id INT(8) PRIMARY KEY AUTO_INCREMENT,
