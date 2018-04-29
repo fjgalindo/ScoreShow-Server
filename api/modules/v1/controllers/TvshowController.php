@@ -7,8 +7,8 @@ use api\modules\v1\models\Title;
 use api\modules\v1\models\Tvshow;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
-use yii\rest\ActiveController;
 use yii\filters\Cors;
+use yii\rest\ActiveController;
 
 class TvshowController extends ActiveController
 {
@@ -46,7 +46,7 @@ class TvshowController extends ActiveController
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'get' => ['POST', 'OPTIONS'],
+                'get' => ['GET', 'OPTIONS'],
                 'view-model' => ['GET', 'OPTIONS'],
                 'last-comments' => ['GET', 'OPTIONS'],
                 'platforms' => ['GET', 'OPTIONS'],
@@ -58,7 +58,7 @@ class TvshowController extends ActiveController
                 'list-season' => ['GET', 'OPTIONS'],
                 'watch-season' => ['POST', 'OPTIONS'],
                 'unwatch-season' => ['POST', 'OPTIONS'],
-                '*' => ['OPTIONS']
+                '*' => ['OPTIONS'],
             ],
         ];
         return $behaviors;
@@ -113,11 +113,9 @@ class TvshowController extends ActiveController
         if (!$model = Tvshow::getTvShowByTMDbId($id_tmdb)) {
             $model = $this->addTVShow($id_tmdb);
         }
-
+        
         if ($model) {
-            return Yii::$app->controller->module->runAction(
-                'tvshow/view', ['id' => $model->id]
-            );
+            return $this->actionViewModel($model->id);
         } else {
             return new ServerResponse(34);
         }
@@ -138,11 +136,12 @@ class TvshowController extends ActiveController
         }
 
         $response = $model->cache;
+        $response['_id'] = $model->id;
         $response['following'] = $model->isFollowedByUser();
 
         return $response;
     }
-    
+
     public function actionLastcomments($id)
     {
         if (!$tvshow = Tvshow::findOne($id)) {

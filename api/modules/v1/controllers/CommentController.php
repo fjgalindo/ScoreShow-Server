@@ -10,7 +10,7 @@ use yii\rest\ActiveController;
 
 class CommentController extends ActiveController
 {
-
+    public $enableCsrfValidation = false;
     public $modelClass = 'api\modules\v1\models\Comment';
 
     public function behaviors()

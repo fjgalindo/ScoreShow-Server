@@ -12,6 +12,7 @@ use yii\rest\ActiveController;
 
 class EpisodeController extends ActiveController
 {
+    public $enableCsrfValidation = false;
     public $modelClass = 'api\modules\v1\models\Episode';
 
     public function behaviors()
@@ -22,7 +23,7 @@ class EpisodeController extends ActiveController
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::className(),
             'cors' => [
-                'Origin' => ['*'],
+                'Origin' => ['http://localhost:8100','*'],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -45,6 +46,7 @@ class EpisodeController extends ActiveController
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
+                '*'=>['OPTIONS']
             ],
         ];
 
@@ -77,6 +79,7 @@ class EpisodeController extends ActiveController
         $response = json_decode($model->cache, true);
 
         $response['watched'] = $model->isWatched();
+        $response['tvshow_id'] = $id;
         /*
         $response['last_comments'] = $model->getLastComments();
         $response['platforms'] = $model->platformLinks;
@@ -156,7 +159,7 @@ class EpisodeController extends ActiveController
 
     public function actionUnwatch($id, $season, $ep)
     {
-        if ($tv_episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) { // Check if movie exists
+        if (!$tv_episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) {
             return new ServerResponse(34);
         }
 
@@ -210,23 +213,25 @@ return new ServerResponse(1);
  */
     public function actionListSeason($id, $season)
     {
-        if ($tvshow = Tvshow::findOne($id)) {
-            $id_tmdb = $tvshow->title->id_tmdb;
+        if (!$tvshow = Tvshow::findOne($id)) {
+            return new ServerResponse(34);
+        }
 
-            $response = Yii::$app->TMDb->getSeasonData($id_tmdb, $season);
-            foreach ($response['episodes'] as $key => $episode) {
-                if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
-                    $new_episode = new Episode();
-                    $new_episode->tvshow = $tvshow->id;
-                    $new_episode->season_num = $season;
-                    $new_episode->episode_num = $episode['episode_number'];
-                    //$new_episode->cache = json_encode(Yii::$app->TMDb->getEpisodeData($id_tmdb, $season, $episode['episode_number']));
-                    $new_episode->cache = json_encode($response['episodes'][$key]);
+        $id_tmdb = $tvshow->title->id_tmdb;
+        $response = Yii::$app->TMDb->getSeasonData($id_tmdb, $season);
+        $response['tvshow_id'] = $id;
+        foreach ($response['episodes'] as $key => $episode) {
+            if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
+                $new_episode = new Episode();
+                $new_episode->tvshow = $tvshow->id;
+                $new_episode->season_num = $season;
+                $new_episode->episode_num = $episode['episode_number'];
+                //$new_episode->cache = json_encode(Yii::$app->TMDb->getEpisodeData($id_tmdb, $season, $episode['episode_number']));
+                $new_episode->cache = json_encode($response['episodes'][$key]);
 
-                    // Don't set last_update field, so on action view it will update cache adding some extras
-                    $new_episode->save();
-                }
-
+                // Don't set last_update field, so on action view it will update cache adding some extras
+                $new_episode->save();
+            }else{
                 if ($watch = WatchEpisode::findOne(
                     [
                         'tvshow' => $id,
@@ -235,13 +240,12 @@ return new ServerResponse(1);
                         'user' => Yii::$app->user->identity->id,
                     ])) {
                     $response['episodes'][$key]['watched'] = $watch->date;
-                    $response['episodes'][$key]['score'] = $watch->score;
+                    $response['episodes'][$key]['myscore'] = $watch->score;
                 } else {
                     $response['episodes'][$key]['watched'] = false;
+                    $response['episodes'][$key]['myscore'] = false;
                 }
             }
-        } else {
-            $response = "Error: La serie con id $id no existe"; // Controlar mejor los errores: intentar hacerlos similares a los de tmdb
         }
 
         return $response;

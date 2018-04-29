@@ -12,7 +12,6 @@ use yii\filters\Cors;
 
 class UserController extends \yii\rest\ActiveController
 {
-
     public $enableCsrfValidation = false;
     public $modelClass = 'api\modules\v1\models\User';
 

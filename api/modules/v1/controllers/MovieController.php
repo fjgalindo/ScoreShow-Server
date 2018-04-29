@@ -11,6 +11,7 @@ use yii\rest\ActiveController;
 
 class MovieController extends ActiveController
 {
+    public $enableCsrfValidation = false;
     public $modelClass = 'api\modules\v1\models\Movie';
 
     public function behaviors()
