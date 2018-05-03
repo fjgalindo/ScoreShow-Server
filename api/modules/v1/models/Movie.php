@@ -101,15 +101,16 @@ class Movie extends \yii\db\ActiveRecord
         return false;
     }
 
-    public function getTmdbData(){
+    public function getTmdbData()
+    {
         return Yii::$app->TMDb->getTitleData($this->title->id_tmdb, 'movie', ['credits', 'images'], false);
     }
 
     public function isReleased()
     {
-        $cache = $this->title->cache ? 
-            $this->title->cache
-        :   json_decode($this->getTmdbData());
+        $cache = $this->title->cache ?
+        $this->title->cache
+        : json_decode($this->getTmdbData());
 
         $release = strtotime($cache['release_date']);
         $today = strtotime(date("Y-m-d"));
@@ -128,22 +129,23 @@ class Movie extends \yii\db\ActiveRecord
 
     public function getMyScore()
     {
-        if($model = WatchMovie::findOne(
+        if ($model = WatchMovie::findOne(
             [
                 'movie' => $this->id,
                 'user' => Yii::$app->user->identity->id,
             ]
-        )){
+        )) {
             return floatval($model->score);
-        }else{
+        } else {
             return 0;
         }
     }
 
-    public function getByTMDbId($id_tmdb){
+    public function getByTMDbId($id_tmdb)
+    {
         return Title::find()
-                ->where('`title`.`id_tmdb` = :id_tmdb AND `title`.`id` IN (select `id` from `movie`)')
-                ->addParams([':id_tmdb' => $id_tmdb]) // Avoid SQL Injections
-                ->one();
+            ->where('`title`.`id_tmdb` = :id_tmdb AND `title`.`id` IN (select `id` from `movie`)')
+            ->addParams([':id_tmdb' => $id_tmdb]) // Avoid SQL Injections
+            ->one();
     }
 }

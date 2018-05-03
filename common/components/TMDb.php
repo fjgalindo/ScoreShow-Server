@@ -16,16 +16,16 @@ class TMDb extends Component
 
     public function getTitleData($id_tmdb, $type, $ext = [], $decode = true)
     {
-        
+
         $curl = new curl\Curl();
         $append = implode(',', $ext);
         $data = $curl->setHeaders([
             'content-type' => 'application/json',
             'charset' => 'utf-8',
         ])->get("https://api.themoviedb.org/3/$type/$id_tmdb?api_key=$this->api_key&language=$this->language&append_to_response=$append");
-        
+
         $show = $decode ? json_decode($data, true) : $data;
-        
+
         return $show;
     }
 
@@ -145,6 +145,31 @@ class TMDb extends Component
 
         return $results;
 
+    }
+
+    public function getRecommendations($id_tmdb, $type = "tv", $page = 1)
+    {
+        $curl = new curl\Curl();
+        $data = $curl->get("https://api.themoviedb.org/3/$type/$id_tmdb/recommendations?api_key=$this->api_key&language=$this->language&page=$page");
+        $recommendations = json_decode($data, true);
+
+        return $recommendations;
+    }
+
+    public function getPopular($type, $page = 1)
+    {
+        $curl = new curl\Curl();
+        $data = $curl->get("https://api.themoviedb.org/3/$type/popular?api_key=$this->api_key&language=$this->language&page=$page");
+        $popular = json_decode($data, true);
+        return $popular;
+    }
+
+    public function getTopRated($type, $page = 1)
+    {
+        $curl = new curl\Curl();
+        $data = $curl->get("https://api.themoviedb.org/3/$type/top_rated?api_key=$this->api_key&language=$this->language&page=$page");
+        $top_rated = json_decode($data, true);
+        return $top_rated;
     }
 
 }

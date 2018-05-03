@@ -10,6 +10,9 @@ return [
             /* === TVSHOW ROUNTING RULES === */
             //'tv/' => 'tvshow/index',
             'tv/pending' => 'tvshow/to-watch',
+            'tv/recommendations' => 'tvshow/recommendations',
+            'tv/popular' => 'tvshow/popular',
+            'tv/top-rated' => 'tvshow/top-rated',
             'tv/<id:\d+>' => 'tvshow/view-model',
             'tv/<id:\d+>/follow' => 'tvshow/follow',
             'tv/<id:\d+>/unfollow' => 'tvshow/unfollow',
@@ -34,6 +37,9 @@ return [
             /* === MOVIES ROUNTING RULES === */
             //'movie/' => 'movie/index',
             'movie/pending' => 'movie/to-watch',
+            'movie/recommendations' => 'movie/recommendations',
+            'movie/popular' => 'movie/popular',
+            'movie/top-rated' => 'movie/top-rated',
             'movie/platforms' => 'movie/platforms',
             'movie/last-comments' => 'movie/last-comments',
             'movie/<id:\d+>' => 'movie/view-model',
@@ -62,6 +68,7 @@ return [
             'my/update' => 'user/update',
             'my/comments' => 'user/my-comments',
             'my/stats' => 'user/my-stats',
+            'my/followeds' => 'user/followeds',
 
             'register' => 'user/register',
             'login' => 'user/auth',

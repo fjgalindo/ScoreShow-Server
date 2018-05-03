@@ -49,6 +49,11 @@ class MovieController extends ActiveController
                 'platforms' => ['GET', 'OPTIONS'],
                 'to-watch' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
+
+                'recommendations' => ['GET', 'OPTIONS'],
+                'popular' => ['GET', 'OPTIONS'],
+                'top-rated' => ['GET', 'OPTIONS'],
+                '*' => ['OPTIONS'],
             ],
         ];
         return $behaviors;
@@ -72,7 +77,6 @@ class MovieController extends ActiveController
     {
         // Check if this id exists on TMDb as a tvshow
         $tmdb_data = Yii::$app->TMDb->getTitleData($id_tmdb, 'movie', ['credits', 'images']);
-
         if (!isset($tmdb_data['id'])) {
             return false;
         }
@@ -86,7 +90,8 @@ class MovieController extends ActiveController
         if ($title->save()) {
             $movie = new Movie();
             $movie->id = $title->id;
-            if ($movie->save()) {
+            if ($movie->validate()) {
+                $movie->save(false);
                 return $movie;
             }
         }
@@ -99,18 +104,13 @@ class MovieController extends ActiveController
      */
     public function actionGet($id_tmdb)
     {
-
         if (!$model = Movie::getByTMDbId($id_tmdb)) {
-            $model = $this->addMovie($id_tmdb);
+            if (!$model = $this->addMovie($id_tmdb)) {
+                return new ServerResponse(34);
+            }
         }
 
-        if (!$model) {
-            return new ServerResponse(34);
-        }
-
-        return Yii::$app->controller->module->runAction(
-            'movie/view', ['id' => $model->id]
-        );
+        return $this->actionViewModel($model->id);
 
     }
 
@@ -121,17 +121,15 @@ class MovieController extends ActiveController
         }
 
         $model = $movie->title;
-        if ($model->needsUpdate() && $model->cache) {
+        if ($model->needsUpdate()) {
             if (!$model = $this->updateCache($model->id)) {
                 return new ServerResponse(10);
             }
         }
 
-        $response = json_decode($model->cache, true);
-        //$response['last_comments'] = $model->getLastComments();
+        $response = $model->cache;
+        $response['_id'] = $model->id;
         $response['following'] = $model->isFollowedByUser();
-        //$response['platforms'] = $model->platformLinks;
-
         $response['watched'] = $movie->isWatched();
         $response['myscore'] = $movie->myScore;
 
@@ -261,7 +259,7 @@ class MovieController extends ActiveController
         $title = Title::findOne(['id' => $title_id]);
 
         //$title->cache = Yii::$app->TMDb->getTitleData($title->id_tmdb, 'tv', ['credits', 'images'], false);
-        $title->cache = json_encode($title->movie->getTMDbData());
+        $title->cache = $title->movie->getTMDbData();
 
         $title->last_update = date("Y-m-d H-i-s");
 
@@ -270,5 +268,28 @@ class MovieController extends ActiveController
         }
 
         return false;
+    }
+
+    public function actionRecommendations()
+    {
+        if ($arr = Yii::$app->user->identity->followedMovies) {
+            $key = array_rand($arr, 1);
+            $id_tmdb = Yii::$app->user->identity->followedTvshows[$key]['id_tmdb'];
+            $res = Yii::$app->TMDb->getRecommendations($id_tmdb, 'movie');
+            if ($res['results']) {
+                return $res;
+            }
+        }
+        return false;
+    }
+
+    public function actionPopular()
+    {
+        return Yii::$app->TMDb->getPopular('movie');
+    }
+
+    public function actionTopRated()
+    {
+        return Yii::$app->TMDb->getTopRated('movie');
     }
 }

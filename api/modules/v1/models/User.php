@@ -114,7 +114,6 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     const STATUS_DELETED = 0;
     const STATUS_ACTIVE = 1;
 
-
     /**
      * {@inheritdoc}
      */
@@ -256,10 +255,8 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         $this->password_reset_token = null;
     }
 
-
-
-
-    public function setActivity($activity){
+    public function setActivity($activity)
+    {
         $this->activity = $activity;
     }
 
@@ -296,7 +293,12 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getFollowedTvshows()
     {
-        return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM tvshow)')->viaTable('follow_title', ['user' => 'id']);
+        if ($this->id === Yii::$app->user->identity->id) {
+            return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM tvshow)')->viaTable('follow_title', ['user' => 'id']);
+        } else {
+            return $this->hasMany(Tvshow::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+        }
+
         /*return Title::find()
     ->where("`title`.`id` IN (select `id` from `tvshow`) AND `title`.`id` IN (SELECT `id` FROM `follow_title`) AND $this->id IN (SELECT `id` FROM `follow_title`)")
     ;*/
@@ -308,21 +310,26 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getFollowedMovies()
     {
-        return $this->hasMany(Movie::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+        if ($this->id === Yii::$app->user->identity->id) {
+            return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM movie)')->viaTable('follow_title', ['user' => 'id']);
+        } else {
+            return $this->hasMany(Movie::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+        }
+
     }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    /* public function getFollowUsrs()
+    {
+    return $this->hasMany(FollowUsr::className(), ['followed' => 'id']);
+    } */
 
     /**
      * @return \yii\db\ActiveQuery
      */
     public function getFollowUsrs()
-    {
-        return $this->hasMany(FollowUsr::className(), ['followed' => 'id']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getFollowUsrs0()
     {
         return $this->hasMany(FollowUsr::className(), ['follower' => 'id']);
     }
@@ -332,7 +339,7 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getFollowers()
     {
-        return $this->hasMany(User::className(), ['id' => 'follower'])->viaTable('follow_us', ['followed' => 'id']);
+        return $this->hasMany(User::className(), ['id' => 'follower'])->viaTable('follow_usr', ['followed' => 'id']);
     }
 
     /**
@@ -380,7 +387,12 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getWatchedMovies()
     {
-        return $this->hasMany(Movie::className(), ['id' => 'movie'])->viaTable('watch_movie', ['user' => 'id']);
+        if ($this->id === Yii::$app->user->identity->id) {
+            return $this->hasMany(Title::className(), ['id' => 'movie'])->where('`id` IN (SELECT movie FROM watch_movie)')->viaTable('watch_movie', ['user' => 'id']);
+        } else {
+            return $this->hasMany(Movie::className(), ['id' => 'movie'])->viaTable('watch_movie', ['user' => 'id']);
+        }
+
     }
 
     public function getUserActivity()
@@ -389,7 +401,6 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         $activity['shows'] = [];
 
         $activity['shows']['following'] = [];
-
         $activity['shows']['following']['tvshows'] = $this->followedTvshows;
         $activity['shows']['following']['movies'] = $this->followedMovies;
 

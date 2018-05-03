@@ -23,7 +23,7 @@ class EpisodeController extends ActiveController
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::className(),
             'cors' => [
-                'Origin' => ['http://localhost:8100','*'],
+                'Origin' => ['http://localhost:8100', '*'],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -46,7 +46,7 @@ class EpisodeController extends ActiveController
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
-                '*'=>['OPTIONS']
+                '*' => ['OPTIONS'],
             ],
         ];
 
@@ -219,7 +219,7 @@ return new ServerResponse(1);
 
         $id_tmdb = $tvshow->title->id_tmdb;
         $response = Yii::$app->TMDb->getSeasonData($id_tmdb, $season);
-        $response['tvshow_id'] = $id;
+        $response['tvshow_id'] = $tvshow->id;
         foreach ($response['episodes'] as $key => $episode) {
             if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
                 $new_episode = new Episode();
@@ -231,7 +231,7 @@ return new ServerResponse(1);
 
                 // Don't set last_update field, so on action view it will update cache adding some extras
                 $new_episode->save();
-            }else{
+            } else {
                 if ($watch = WatchEpisode::findOne(
                     [
                         'tvshow' => $id,

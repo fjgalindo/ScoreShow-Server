@@ -58,6 +58,10 @@ class TvshowController extends ActiveController
                 'list-season' => ['GET', 'OPTIONS'],
                 'watch-season' => ['POST', 'OPTIONS'],
                 'unwatch-season' => ['POST', 'OPTIONS'],
+
+                'recommendations' => ['GET', 'OPTIONS'],
+                'popular' => ['GET', 'OPTIONS'],
+                'top-rated' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -113,7 +117,7 @@ class TvshowController extends ActiveController
         if (!$model = Tvshow::getTvShowByTMDbId($id_tmdb)) {
             $model = $this->addTVShow($id_tmdb);
         }
-        
+
         if ($model) {
             return $this->actionViewModel($model->id);
         } else {
@@ -232,5 +236,28 @@ class TvshowController extends ActiveController
         }
 
         return false;
+    }
+
+    public function actionRecommendations()
+    {
+        if ($arr = Yii::$app->user->identity->followedTvshows) {
+            $key = array_rand($arr, 1);
+            $id_tmdb = Yii::$app->user->identity->followedTvshows[$key]['id_tmdb'];
+            $res = Yii::$app->TMDb->getRecommendations($id_tmdb, 'tv');
+            if ($res['results']) {
+                return $res;
+            }
+        }
+        return false;
+    }
+
+    public function actionPopular()
+    {
+        return Yii::$app->TMDb->getPopular('tv');
+    }
+
+    public function actionTopRated()
+    {
+        return Yii::$app->TMDb->getTopRated('tv');
     }
 }

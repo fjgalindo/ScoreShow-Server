@@ -38,7 +38,7 @@ class UserController extends \yii\rest\ActiveController
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
             'optional' => ['auth', 'register'],
-            'except'=> ['options']
+            'except' => ['options'],
         ];
 
         $behaviors['verbs'] = [
@@ -54,6 +54,7 @@ class UserController extends \yii\rest\ActiveController
                 'my-stats' => ['GET', 'OPTIONS'],
                 'follow-user' => ['POST', 'OPTIONS'],
                 'unfollow-user' => ['POST', 'OPTIONS'],
+                'followeds' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -61,14 +62,12 @@ class UserController extends \yii\rest\ActiveController
         return $behaviors;
     }
 
-
-
     public function actions()
     {
         $actions = parent::actions();
 
         unset($actions['delete'], $actions['create'], $actions['update'], $actions['view'], $actions['index']);
-        
+
         return $actions;
     }
 
@@ -101,12 +100,21 @@ class UserController extends \yii\rest\ActiveController
             //$model->activity = $model->userActivity;
 
             $response['profile'] = $model;
-            $response['activity'] = $model->userActivity;
+            //$response['activity'] = $model->userActivity;
 
         } else {
             return new ServerResponse(34);
         }
         return $response;
+    }
+
+    public function actionActivity($id)
+    {
+        if ($model = User::findOne(['id' => $id])) {
+            return $model->userActivity;
+        } else {
+            return new ServerResponse(34);
+        }
     }
 
     public function actionMyComments()
@@ -186,7 +194,6 @@ class UserController extends \yii\rest\ActiveController
 
     public function actionFollowUser($id)
     {
-
         $user = Yii::$app->user->identity;
         if ($followed = User::findOne(['id' => $id])) {
             if (!$model = FollowUsr::findOne(['follower' => $user->id, 'followed' => $id])) {
@@ -199,12 +206,10 @@ class UserController extends \yii\rest\ActiveController
                 }
             }
         } else {
-            //$response['message'] = "El usuario indicado no existe";
             return new ServerResponse(34);
         }
 
-        return new ServerResponse(1); // This means user is following the specified user (no changes needed)
-
+        return new ServerResponse(1);
     }
 
     public function actionUnfollowUser($id)
@@ -216,7 +221,25 @@ class UserController extends \yii\rest\ActiveController
             }
         }
 
-        return new ServerResponse(1); // This means user is not following the user actually or unfollow successfully
+        return new ServerResponse(1);
     }
+
+    public function actionFolloweds()
+    {
+        $user = Yii::$app->user->identity;
+        return $user->followeds;
+        /* $following = [];
+    foreach ($user->followUsrs as $key => $value) {
+    if ($value['accepted']) {
+    array_push($following, $this->actionViewModel($value['followed']));
+    }
+    };
+    return $following; */
+    }
+
+    /* public function actionNews(){
+$user = Yii::$app->user->identity;
+
+} */
 
 }
