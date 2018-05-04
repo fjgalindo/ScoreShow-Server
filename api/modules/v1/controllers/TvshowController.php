@@ -54,7 +54,6 @@ class TvshowController extends ActiveController
                 'unfollow' => ['POST', 'OPTIONS'],
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
-                'to-watch' => ['GET', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
                 'watch-season' => ['POST', 'OPTIONS'],
                 'unwatch-season' => ['POST', 'OPTIONS'],
@@ -204,25 +203,6 @@ class TvshowController extends ActiveController
         return Yii::$app->controller->module->runAction(
             'comment/comment', ['title' => $id]
         );
-    }
-
-    public function actionToWatch()
-    {
-        $user = Yii::$app->user->identity;
-
-        $titles = $user->titles;
-        $pending = [];
-
-        foreach ($titles as $key => $title) {
-            if ($tvshow = $title->tvshow) {
-                $unwatched = null;
-                $found_pending = false;
-                for ($i = 1; $i <= count(json_decode($title['cache'], true)['seasons']) && !$unwatched; $i++) {
-                    array_push($pending, json_decode($title['cache'], true)['seasons'][$i]);
-                }
-            }
-        }
-        return $pending;
     }
 
     public function updateCache($title_id)

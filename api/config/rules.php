@@ -9,7 +9,7 @@ return [
 
             /* === TVSHOW ROUNTING RULES === */
             //'tv/' => 'tvshow/index',
-            'tv/pending' => 'tvshow/to-watch',
+            'tv/pending' => 'episode/to-watch',
             'tv/recommendations' => 'tvshow/recommendations',
             'tv/popular' => 'tvshow/popular',
             'tv/top-rated' => 'tvshow/top-rated',
@@ -62,6 +62,7 @@ return [
             'user/<id:\d+>' => 'user/view-model',
             'user/<id:\d+>/follow' => 'user/follow-user',
             'user/<id:\d+>/unfollow' => 'user/unfollow-user',
+            'user/<id:\d+>/activity' => 'user/activity',
 
             /* === AUTH USER ACTIONS === */
             'my' => 'user/profile',
@@ -69,6 +70,7 @@ return [
             'my/comments' => 'user/my-comments',
             'my/stats' => 'user/my-stats',
             'my/followeds' => 'user/followeds',
+            'my/activity' => 'user/activity',
 
             'register' => 'user/register',
             'login' => 'user/auth',

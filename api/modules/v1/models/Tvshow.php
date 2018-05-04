@@ -56,19 +56,29 @@ class Tvshow extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getSeason($season)
+    {
+        return $this->hasMany(Episode::className(), ['tvshow' => 'id'])->where(['season_num' => $season])->all();
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getTitle()
     {
         return $this->hasOne(Title::className(), ['id' => 'id']);
     }
 
-    public function getTvShowByTMDbId($id_tmdb){
+    public function getTvShowByTMDbId($id_tmdb)
+    {
         return Title::find()
-                ->where('`title`.`id_tmdb` = :id_tmdb AND `title`.`id` IN (select `id` from `tvshow`)')
-                ->addParams([':id_tmdb' => $id_tmdb]) // Avoid SQL Injections
-                ->one();
+            ->where('`title`.`id_tmdb` = :id_tmdb AND `title`.`id` IN (select `id` from `tvshow`)')
+            ->addParams([':id_tmdb' => $id_tmdb]) // Avoid SQL Injections
+            ->one();
     }
 
-    public function getTmdbData(){
+    public function getTmdbData()
+    {
         return Yii::$app->TMDb->getTitleData($this->title->id_tmdb, 'tv', ['credits', 'images'], false);
     }
 }

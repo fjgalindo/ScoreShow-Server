@@ -46,6 +46,7 @@ class EpisodeController extends ActiveController
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
+                'to-watch' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -222,15 +223,7 @@ return new ServerResponse(1);
         $response['tvshow_id'] = $tvshow->id;
         foreach ($response['episodes'] as $key => $episode) {
             if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
-                $new_episode = new Episode();
-                $new_episode->tvshow = $tvshow->id;
-                $new_episode->season_num = $season;
-                $new_episode->episode_num = $episode['episode_number'];
-                //$new_episode->cache = json_encode(Yii::$app->TMDb->getEpisodeData($id_tmdb, $season, $episode['episode_number']));
-                $new_episode->cache = json_encode($response['episodes'][$key]);
-
-                // Don't set last_update field, so on action view it will update cache adding some extras
-                $new_episode->save();
+                /* ################### PENDING ################ */
             } else {
                 if ($watch = WatchEpisode::findOne(
                     [
@@ -293,6 +286,51 @@ return new ServerResponse(1);
         return $response;
     }
 
+    public function actionToWatch()
+    {
+        $user = Yii::$app->user->identity;
+
+        $tvshows = $user->tvshows;
+        $pending = [];
+
+        foreach ($tvshows as $key => $tvshow) {
+            //return $tvshow->episodes;
+            $unwatched = null;
+            $title = $tvshow->title;
+            // var_dump(count($title['cache']['seasons']));
+            /* foreach ($title['cache']['seasons'] as $key => $value) {
+            var_dump($value['name']);
+            } */
+            $last_season = array_reverse($title['cache']['seasons'])[0];
+            $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
+
+            $released = true;
+            for ($i = 0; $i < count($season['episodes']) && $released; $i++) {
+                $episode = $season['episodes'][$i];
+
+                $today = strtotime(date("Y-m-d"));
+                $air_date = strtotime($episode['air_date']);
+
+                if ($air_date >= $today) {
+                    $released = false;
+                    //echo "Checking " . $title->cache['name'] . " ===> ";
+                    $pending[$episode['air_date']] = [];
+                    array_push($pending[$episode['air_date']], $episode['episode_number']);
+                    if (!Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
+                        if (!$this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'])) {
+                            return new ServerResponse(10);
+                        }
+                        echo "S" . $episode['season_number'] . "E" . $episode['episode_number'] . " for " . $title->cache['name'] . " doesnt exists \n";
+                    }
+                    //echo "S" . $episode['season_number'] . "E" . $episode['episode_number'] . "\n";
+                }
+            }
+        }
+        ksort($pending);
+
+        return $pending;
+    }
+
     public function updateCache($tvshow, $season, $ep)
     {
         $episode = Episode::findOne(['tvshow' => $tvshow, 'season_num' => $season, 'episode_num' => $ep]);
@@ -321,6 +359,25 @@ return new ServerResponse(1);
         }
 
         return false;
+    }
+
+    public function addEpisode($tvshow, $season_num, $episode_num)
+    {
+        $episode = new Episode();
+        $episode->tvshow = $tvshow->id;
+        $episode->season_num = $season_num;
+        $episode->episode_num = $episode_num;
+        $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num);
+        //$new_episode->cache = json_encode($response['episodes'][$key]);
+
+        $episode->last_update = date("Y-m-d H-i-s");
+
+        // Don't set last_update field, so on action view it will update cache adding some extras
+        if (!$episode->validate()) {
+            return false;
+        }
+        //$episode->save(false);
+        return $episode;
     }
 
 }
