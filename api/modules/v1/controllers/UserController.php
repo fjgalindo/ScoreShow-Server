@@ -48,6 +48,7 @@ class UserController extends \yii\rest\ActiveController
                 'register' => ['POST', 'OPTIONS'],
                 'view-model' => ['GET', 'OPTIONS'],
                 'profile' => ['GET', 'OPTIONS'],
+                'activity' => ['GET', 'OPTIONS'],
                 'update' => ['PUT', 'POST', 'OPTIONS'],
                 'my' => ['GET', 'OPTIONS'],
                 'my-comments' => ['GET', 'OPTIONS'],
@@ -89,7 +90,7 @@ class UserController extends \yii\rest\ActiveController
 
     public function actionViewModel($id)
     {
-        $response = [];
+        //$response = [];
         if ($model = User::findOne(['id' => $id])) {
             $model->scenario = User::SCENARIO_VIEW;
 
@@ -99,13 +100,13 @@ class UserController extends \yii\rest\ActiveController
 
             //$model->activity = $model->userActivity;
 
-            $response['profile'] = $model;
+            //$response['profile'] = $model;
             //$response['activity'] = $model->userActivity;
-
+            return $model;
         } else {
             return new ServerResponse(34);
         }
-        return $response;
+        //return $response;
     }
 
     public function actionActivity($id)
@@ -185,11 +186,11 @@ class UserController extends \yii\rest\ActiveController
 
     public function actionProfile()
     {
-        $response = [];
+        /* $response = [];
         $user = Yii::$app->user->identity;
         $response['profile'] = $user;
-        $response['activity'] = $user->getUserActivity();
-        return $response;
+        $response['activity'] = $user->getUserActivity(); */
+        return Yii::$app->user->identity;
     }
 
     public function actionFollowUser($id)

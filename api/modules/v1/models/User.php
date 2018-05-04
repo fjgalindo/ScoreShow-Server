@@ -291,6 +291,14 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getTvshows()
+    {
+        return $this->hasMany(Tvshow::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getFollowedTvshows()
     {
         if ($this->id === Yii::$app->user->identity->id) {
