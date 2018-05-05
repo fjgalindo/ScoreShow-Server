@@ -40,8 +40,9 @@ use yii\web\IdentityInterface;
  */
 class User extends \yii\db\ActiveRecord implements IdentityInterface
 {
+    const STATUS_DELETED = 0;
+    const STATUS_ACTIVE = 1;
 
-    public $activity;
     public $repeat_password;
 
     /**
@@ -111,8 +112,17 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         ];
     }
 
-    const STATUS_DELETED = 0;
-    const STATUS_ACTIVE = 1;
+    // filter out some fields, best used when you want to inherit the parent implementation
+    // and blacklist some sensitive fields.
+    public function fields()
+    {
+        $fields = parent::fields();
+
+        // remove fields that contain sensitive information
+        unset($fields['auth_key'], $fields['password'], $fields['password_reset_token']);
+
+        return $fields;
+    }
 
     /**
      * {@inheritdoc}
@@ -255,11 +265,6 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         $this->password_reset_token = null;
     }
 
-    public function setActivity($activity)
-    {
-        $this->activity = $activity;
-    }
-
     /**
      * @return \yii\db\ActiveQuery
      */
@@ -299,13 +304,21 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getMovies()
+    {
+        return $this->hasMany(Movie::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
     public function getFollowedTvshows()
     {
-        if ($this->id === Yii::$app->user->identity->id) {
-            return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM tvshow)')->viaTable('follow_title', ['user' => 'id']);
-        } else {
-            return $this->hasMany(Tvshow::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
-        }
+        // if ($this->id === Yii::$app->user->identity->id) {
+        // } else {
+        //     return $this->hasMany(Tvshow::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+        // }
+        return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM tvshow)')->viaTable('follow_title', ['user' => 'id']);
 
         /*return Title::find()
     ->where("`title`.`id` IN (select `id` from `tvshow`) AND `title`.`id` IN (SELECT `id` FROM `follow_title`) AND $this->id IN (SELECT `id` FROM `follow_title`)")
@@ -318,11 +331,11 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getFollowedMovies()
     {
-        if ($this->id === Yii::$app->user->identity->id) {
-            return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM movie)')->viaTable('follow_title', ['user' => 'id']);
-        } else {
-            return $this->hasMany(Movie::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
-        }
+        // if ($this->id === Yii::$app->user->identity->id) {
+        // } else {
+        //     return $this->hasMany(Movie::className(), ['id' => 'title'])->viaTable('follow_title', ['user' => 'id']);
+        // }
+        return $this->hasMany(Title::className(), ['id' => 'title'])->where('`id` IN (SELECT id FROM movie)')->viaTable('follow_title', ['user' => 'id']);
 
     }
 
@@ -395,11 +408,11 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getWatchedMovies()
     {
-        if ($this->id === Yii::$app->user->identity->id) {
-            return $this->hasMany(Title::className(), ['id' => 'movie'])->where('`id` IN (SELECT movie FROM watch_movie)')->viaTable('watch_movie', ['user' => 'id']);
-        } else {
-            return $this->hasMany(Movie::className(), ['id' => 'movie'])->viaTable('watch_movie', ['user' => 'id']);
-        }
+        // if ($this->id === Yii::$app->user->identity->id) {
+        // } else {
+        //     return $this->hasMany(Movie::className(), ['id' => 'movie'])->viaTable('watch_movie', ['user' => 'id']);
+        // }
+        return $this->hasMany(Title::className(), ['id' => 'movie'])->where('`id` IN (SELECT movie FROM watch_movie)')->viaTable('watch_movie', ['user' => 'id']);
 
     }
 

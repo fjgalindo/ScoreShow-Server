@@ -46,7 +46,7 @@ class EpisodeController extends ActiveController
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
-                'to-watch' => ['GET', 'OPTIONS'],
+                'premieres' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -286,15 +286,13 @@ return new ServerResponse(1);
         return $response;
     }
 
-    public function actionToWatch()
+    public function actionPremieres()
     {
         $user = Yii::$app->user->identity;
-
         $tvshows = $user->tvshows;
         $pending = [];
 
         foreach ($tvshows as $key => $tvshow) {
-            $unwatched = null;
             $title = $tvshow->title;
             $last_season = array_reverse($title['cache']['seasons'])[0];
             $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
@@ -310,12 +308,16 @@ return new ServerResponse(1);
                     $released = false;
                     //echo "Checking " . $title->cache['name'] . " ===> ";
                     $pending[$episode['air_date']] = [];
-                    if (!Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
-                        if (!$this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'])) {
+                    if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
+                        if (!$model = $this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'])) {
                             return new ServerResponse(10);
                         }
                     }
-                    array_push($pending[$episode['air_date']], $episode['episode_number']);
+                    $item = [];
+                    $item['tvshow'] = $tvshow->title->cache;
+                    $item['tvshow']['tvshow_id'] = $tvshow->title->id;
+                    $item['episode'] = $episode;
+                    array_push($pending[$episode['air_date']], $item);
                 }
             }
         }
@@ -369,7 +371,7 @@ return new ServerResponse(1);
         if (!$episode->validate()) {
             return false;
         }
-        $episode->save(false);
+        //$episode->save(false);
         return $episode;
     }
 

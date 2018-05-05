@@ -53,6 +53,7 @@ class MovieController extends ActiveController
                 'recommendations' => ['GET', 'OPTIONS'],
                 'popular' => ['GET', 'OPTIONS'],
                 'top-rated' => ['GET', 'OPTIONS'],
+                'premieres' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -129,7 +130,11 @@ class MovieController extends ActiveController
 
         $response = $model->cache;
         $response['_id'] = $model->id;
-        $response['following'] = $model->isFollowedByUser();
+        if (!$movie->isReleased()) {
+            $response['following'] = $model->isFollowedByUser();
+        } else {
+            $response['following'] = false;
+        }
         $response['watched'] = $movie->isWatched();
         $response['myscore'] = $movie->myScore;
 
@@ -158,6 +163,10 @@ class MovieController extends ActiveController
     {
         if (!$movie = Movie::findOne($id)) { // If movie exists
             return new ServerResponse(34);
+        }
+
+        if ($movie->isReleased()) {
+            return new ServerResponse(14);
         }
 
         return Yii::$app->controller->module->runAction(
@@ -249,11 +258,6 @@ class MovieController extends ActiveController
 
     }
 
-    public function actionToWatch()
-    {
-
-    }
-
     public function updateCache($title_id)
     {
         $title = Title::findOne(['id' => $title_id]);
@@ -291,5 +295,24 @@ class MovieController extends ActiveController
     public function actionTopRated()
     {
         return Yii::$app->TMDb->getTopRated('movie');
+    }
+
+    public function actionPremieres()
+    {
+        $user = Yii::$app->user->identity;
+        $movies = $user->movies;
+        $pending = [];
+        foreach ($movies as $key => $movie) {
+            $premiere_date = $movie->title->cache['release_date'];
+            $today = strtotime(date("Y-m-d"));
+            $release_date = strtotime($premiere_date);
+
+            if ($release_date >= $today) {
+                $pending[$premiere_date] = [];
+                array_push($pending[$premiere_date], $movie->title);
+            }
+        }
+        ksort($pending);
+        return $pending;
     }
 }

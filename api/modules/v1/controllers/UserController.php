@@ -82,7 +82,7 @@ class UserController extends \yii\rest\ActiveController
 
         $model->attributes = Yii::$app->request->bodyParams;
         if ($user = $model->login()) {
-            return $user;
+            return ['auth_key' => $user->auth_key];
         } else {
             return $model;
         }
@@ -147,14 +147,11 @@ class UserController extends \yii\rest\ActiveController
         $user->status = 0;
         $user->password = Yii::$app->security->generatePasswordHash($user->password);
 
-        if ($user->validate()) {
-            $user->save(false);
-            return $user;
-        } else {
+        if (!$user->validate()) {
             return new ServerResponse(5, $user->errors);
         }
-
-        return $user;
+        $user->save(false);
+        return ['auth_key' => $user->auth_key];
     }
 
     public function actionUpdate()
