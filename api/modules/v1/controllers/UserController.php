@@ -56,6 +56,7 @@ class UserController extends \yii\rest\ActiveController
                 'follow-user' => ['POST', 'OPTIONS'],
                 'unfollow-user' => ['POST', 'OPTIONS'],
                 'followeds' => ['GET', 'OPTIONS'],
+                'followeds-activity' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -225,19 +226,26 @@ class UserController extends \yii\rest\ActiveController
     public function actionFolloweds()
     {
         $user = Yii::$app->user->identity;
-        return $user->followeds;
+        return $user->followedUsers;
         /* $following = [];
     foreach ($user->followUsrs as $key => $value) {
     if ($value['accepted']) {
     array_push($following, $this->actionViewModel($value['followed']));
     }
     };
-    return $following; */
+    return $following;
+     */
     }
 
-    /* public function actionNews(){
-$user = Yii::$app->user->identity;
-
-} */
+    public function actionFollowedsActivity()
+    {
+        $friends = Yii::$app->user->identity->followedUsers;
+        $activity = [];
+        foreach ($friends as $key => $friend) {
+            $friend->lastComment ? array_push($activity[$friend->lastComment['date']], $friend->lastComment) : null;
+            $friend->lastFollowedTvshow ? array_push($activity[$friend->lastFollowedTvshow['date']], $friend->lastComment) : null;
+        }
+        return $activity;
+    }
 
 }

@@ -223,7 +223,8 @@ return new ServerResponse(1);
         $response['tvshow_id'] = $tvshow->id;
         foreach ($response['episodes'] as $key => $episode) {
             if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
-                $this->addEpisode($tvshow, $season, $episode['episode_number']);
+                $this->addEpisode($tvshow, $season, $episode['episode_number'], $episode);
+
             } else {
                 if ($watch = WatchEpisode::findOne(
                     [
@@ -237,6 +238,7 @@ return new ServerResponse(1);
                 } else {
                     $response['episodes'][$key]['watched'] = false;
                     $response['episodes'][$key]['myscore'] = false;
+
                 }
             }
         }
@@ -356,22 +358,21 @@ return new ServerResponse(1);
         return false;
     }
 
-    public function addEpisode($tvshow, $season_num, $episode_num)
+    public function addEpisode($tvshow, $season_num, $episode_num, $cache)
     {
         $episode = new Episode();
         $episode->tvshow = $tvshow->id;
         $episode->season_num = $season_num;
         $episode->episode_num = $episode_num;
-        $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num);
+        $episode->cache = json_encode($cache);
         //$new_episode->cache = json_encode($response['episodes'][$key]);
 
         $episode->last_update = date("Y-m-d H-i-s");
 
-        // Don't set last_update field, so on action view it will update cache adding some extras
         if (!$episode->validate()) {
             return false;
         }
-        //$episode->save(false);
+        $episode->save(false);
         return $episode;
     }
 

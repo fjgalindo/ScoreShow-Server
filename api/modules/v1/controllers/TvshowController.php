@@ -57,6 +57,7 @@ class TvshowController extends ActiveController
                 'list-season' => ['GET', 'OPTIONS'],
                 'watch-season' => ['POST', 'OPTIONS'],
                 'unwatch-season' => ['POST', 'OPTIONS'],
+                'last-comments' => ['GET', 'OPTIONS'],
 
                 'recommendations' => ['GET', 'OPTIONS'],
                 'popular' => ['GET', 'OPTIONS'],
@@ -145,7 +146,7 @@ class TvshowController extends ActiveController
         return $response;
     }
 
-    public function actionLastcomments($id)
+    public function actionLastComments($id)
     {
         if (!$tvshow = Tvshow::findOne($id)) {
             return new ServerResponse(34);

@@ -366,7 +366,7 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getFolloweds()
+    public function getFollowedUsers()
     {
         return $this->hasMany(User::className(), ['id' => 'followed'])->viaTable('follow_usr', ['follower' => 'id']);
     }
@@ -431,7 +431,7 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
 
         $activity['comments'] = $this->comments;
 
-        $activity['follows_users'] = $this->followeds;
+        $activity['follows_users'] = $this->followedUsers;
         return $activity;
     }
 
@@ -444,5 +444,27 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         $this->addError('repeat_password', "Las contraseñas deben coincidir");
         return false;
     }
+
+    public function getLastComment()
+    {
+        return $this->hasOne(Comment::className(), ['author' => 'id'])->where(['visible' => 1, 'answer_to' => null])->orderBy('date')->one();
+    }
+
+    /* public function getLastWatch()
+    {
+    return $this->hasOne(Comment::className(), ['author' => 'id'])->where(['visible' => 1, 'answer_to' => null])->orderBy('date')->one();
+    } */
+
+    /* public function getLastFollowedTvshow()
+{
+$follow_title = $this->hasOne(FollowTitle::className(), ['user' => 'id'])->where('title IN (SELECT id FROM tvshow)')->orderBy('date')->one();
+$title = $this->hasOne(Title::className(), ['id' => $follow_title->title])->one();
+
+}
+
+public function getLastFollowedUser()
+{
+
+} */
 
 }

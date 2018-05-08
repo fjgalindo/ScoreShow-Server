@@ -18,6 +18,7 @@ return [
             'tv/<id:\d+>/unfollow' => 'tvshow/unfollow',
             'tv/<id:\d+>/comment' => 'tvshow/comment',
             'tv/<id:\d+>/comments' => 'tvshow/view-comments',
+            'tv/<id:\d+>/last-comments' => 'tvshow/last-comments',
 
             /* === EPISODES ROUTING RULES === */
             'tv/<id:\d+>/season/<season:\d+>' => 'episode/list-season',
@@ -72,6 +73,7 @@ return [
             'my/followeds' => 'user/followeds',
             'my/activity' => 'user/activity',
             'my/premieres' => 'title/premieres',
+            'my/followeds-activity' => 'user/followeds-activity',
 
             'register' => 'user/register',
             'login' => 'user/auth',
