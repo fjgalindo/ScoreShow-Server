@@ -5,6 +5,7 @@ namespace api\modules\v1\controllers;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\Title;
 use api\modules\v1\models\Tvshow;
+use api\modules\v1\models\User;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\Cors;
@@ -152,7 +153,14 @@ class TvshowController extends ActiveController
             return new ServerResponse(34);
         }
 
-        return $tvshow->title->lastComments;
+        $response = [];
+        foreach ($tvshow->title->lastComments as $key => $comment) {
+            $response[$key] = $comment;
+            $response[$key]['author'] = User::findOne($comment['author']);
+        }
+        ;
+        return $response;
+
     }
 
     public function actionPlatforms($id)
@@ -192,7 +200,15 @@ class TvshowController extends ActiveController
         if (!$model = Tvshow::findOne(['id' => $id])) {
             return new ServerResponse(34);
         }
-        return $model->title->comments;
+        $response = [];
+        foreach ($model->title->comments as $i => $comment) {
+            $response[$i] = $comment;
+            $response[$i]['author'] = User::findOne($comment['author']);
+            foreach ($comment['answers'] as $j => $answer) {
+                $response[$i]['answers'][$j]['author'] = User::findOne($answer['author']);
+            }
+        };
+        return $response;
     }
 
     public function actionComment($id)
