@@ -116,7 +116,6 @@ class CommentController extends ActiveController
         if (!isset($_POST['content'])) {
             $answer->addError('content', 'Debes especificar el contenido del comentario');
             return new ServerResponse(5, $answer->errors);
-
         }
 
         $answer->attributes = $fields;
