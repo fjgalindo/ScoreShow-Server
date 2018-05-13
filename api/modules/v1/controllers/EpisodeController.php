@@ -376,13 +376,16 @@ return new ServerResponse(1);
         return false;
     }
 
-    public function addEpisode($tvshow, $season_num, $episode_num, $cache)
+    public function addEpisode($tvshow, $season_num, $episode_num, $cache = null)
     {
         $episode = new Episode();
         $episode->tvshow = $tvshow->id;
         $episode->season_num = $season_num;
         $episode->episode_num = $episode_num;
-        $episode->cache = json_encode($cache);
+        
+        $cache 
+        ? $episode->cache = json_encode($cache) 
+        : $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num);
         //$new_episode->cache = json_encode($response['episodes'][$key]);
 
         $episode->last_update = date("Y-m-d H-i-s");

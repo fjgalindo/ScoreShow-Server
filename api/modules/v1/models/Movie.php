@@ -110,7 +110,7 @@ class Movie extends \yii\db\ActiveRecord
     {
         $cache = $this->title->cache ?
         $this->title->cache
-        : json_decode($this->getTmdbData());
+        : json_decode($this->getTmdbData(), true);
 
         $release = strtotime($cache['release_date']);
         $today = strtotime(date("Y-m-d"));
