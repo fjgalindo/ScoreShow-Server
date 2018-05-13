@@ -158,7 +158,7 @@ class TvshowController extends ActiveController
             $response[$key] = $comment;
             $response[$key]['author'] = User::findOne($comment['author']);
         }
-        ;
+
         return $response;
 
     }

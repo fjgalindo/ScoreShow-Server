@@ -5,6 +5,7 @@ namespace api\modules\v1\controllers;
 use api\modules\v1\models\Episode;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\Tvshow;
+use api\modules\v1\models\User;
 use api\modules\v1\models\WatchEpisode;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
@@ -96,7 +97,13 @@ class EpisodeController extends ActiveController
             return new ServerResponse(34);
         }
 
-        return $episode->lastComments;
+        $response = [];
+        foreach ($episode->lastComments as $key => $comment) {
+            $response[$key] = $comment;
+            $response[$key]['author'] = User::findOne($comment['author']);
+        }
+
+        return $response;
     }
 
     public function actionPlatforms($id)
@@ -251,7 +258,18 @@ return new ServerResponse(1);
         if (!$model = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode])) {
             return new ServerResponse(34);
         }
-        return $model->comments;
+
+        $response = [];
+        foreach ($model->comments as $i => $comment) {
+            $response[$i] = $comment;
+            $response[$i]['author'] = User::findOne($comment['author']);
+            foreach ($comment['answers'] as $j => $answer) {
+                $response[$i]['answers'][$j]['author'] = User::findOne($answer['author']);
+            }
+        }
+
+        return $response;
+
     }
 
     public function actionComment($id, $season, $episode)
@@ -311,7 +329,7 @@ return new ServerResponse(1);
                     //echo "Checking " . $title->cache['name'] . " ===> ";
                     $pending[$episode['air_date']] = [];
                     if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
-                        if (!$model = $this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'])) {
+                        if (!$model = $this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'], $episode)) {
                             return new ServerResponse(10);
                         }
                     }

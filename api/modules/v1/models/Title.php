@@ -57,15 +57,16 @@ class Title extends \yii\db\ActiveRecord
         ];
     }
 
-    public function afterFind(){
+    public function afterFind()
+    {
         $this->cache = json_decode($this->cache, true); // Formats JSON string into JSON object
     }
-    
-    public function afterSave($insert, $changedAttributes){
+
+    public function afterSave($insert, $changedAttributes)
+    {
         $this->cache = json_decode($this->cache, true); // Formats JSON string into JSON object
         return $insert;
     }
-    
 
     /**
      * @return \yii\db\ActiveQuery
@@ -108,7 +109,7 @@ class Title extends \yii\db\ActiveRecord
             ->select(['`platform`.`name`', '`stores_title`.`link`'])
             ->from('`stores_title`, `platform`')
             ->where('`stores_title`.`title` = :id AND `platform`.`id` = `stores_title`.`platform`')
-            ->addParams([':id' => $this->id])   // Avoid SQL Injections
+            ->addParams([':id' => $this->id]) // Avoid SQL Injections
             ->all();
     }
 
@@ -131,19 +132,19 @@ class Title extends \yii\db\ActiveRecord
     public function getLastComments()
     {
         return Comment::find()
-        ->where([
-            'title' => $this->id, 
-            'visible' => 1, 
-            'answer_to' => null
-        ])->limit(3)->orderBy(['date'=>SORT_DESC])->all();
+            ->where([
+                'title' => $this->id,
+                'visible' => 1,
+                'answer_to' => null,
+            ])->limit(3)->orderBy(['date' => SORT_DESC])->all();
     }
 
     public function getComments()
     {
         /* METHOD 1 */
         $response = [];
-        $comments = Comment::find()->where(['title' => $this->id, 'visible' => 1, 'answer_to' => null])->all();
-        
+        $comments = Comment::find()->where(['title' => $this->id, 'visible' => 1, 'answer_to' => null])->orderBy(['date' => SORT_DESC])->all();
+
         foreach ($comments as $key => $value) {
             $comment = $value->toArray();
             $comment['answers'] = $value->getAnswers();
@@ -153,22 +154,23 @@ class Title extends \yii\db\ActiveRecord
         return $response;
     }
 
-    public function isFollowedByUser(){
-        if($result = (new \yii\db\Query())
-                ->select(['`follow_title`.*'])
-                ->from('`follow_title`')
-                ->where('`follow_title`.`title` = :title AND `follow_title`.`user` = :user')
-                ->addParams([':title' => $this->id, ':user' => Yii::$app->user->identity->id]) // Avoid SQL Injections
-                ->one())
-        {
+    public function isFollowedByUser()
+    {
+        if ($result = (new \yii\db\Query())
+            ->select(['`follow_title`.*'])
+            ->from('`follow_title`')
+            ->where('`follow_title`.`title` = :title AND `follow_title`.`user` = :user')
+            ->addParams([':title' => $this->id, ':user' => Yii::$app->user->identity->id]) // Avoid SQL Injections
+            ->one()) {
             return true;
         }
-        
+
         return false;
     }
 
-    public function needsUpdate(){
-        $last_update = strtotime("$this->last_update ".Yii::$app->params['api']['v1']['timeToRefeshCache']);
+    public function needsUpdate()
+    {
+        $last_update = strtotime("$this->last_update " . Yii::$app->params['api']['v1']['timeToRefeshCache']);
         $today = strtotime(date("Y-m-d"));
 
         if (!$this->last_update || !$this->cache || $last_update <= $today) {

@@ -135,7 +135,7 @@ class Episode extends \yii\db\ActiveRecord
     {
         // Method 1
         $response = [];
-        $comments = Comment::find()->where(['tvshow' => $this->tvshow, 'season_num' => $this->season_num, 'episode_num' => $this->episode_num, 'visible' => 1, 'answer_to' => null])->all();
+        $comments = Comment::find()->where(['tvshow' => $this->tvshow, 'season_num' => $this->season_num, 'episode_num' => $this->episode_num, 'visible' => 1, 'answer_to' => null])->orderBy(['date' => SORT_DESC])->all();
 
         foreach ($comments as $key => $value) {
             $comment = $value->toArray();

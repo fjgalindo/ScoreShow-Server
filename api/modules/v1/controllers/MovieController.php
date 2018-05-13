@@ -5,6 +5,7 @@ namespace api\modules\v1\controllers;
 use api\modules\v1\models\Movie;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\Title;
+use api\modules\v1\models\User;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\rest\ActiveController;
@@ -136,7 +137,7 @@ class MovieController extends ActiveController
             $response['following'] = false;
         }
         $response['watched'] = $movie->isWatched();
-        $response['myscore'] = $movie->myScore;
+        $response['myScore'] = $movie->myScore;
 
         return $response;
     }
@@ -147,7 +148,13 @@ class MovieController extends ActiveController
             return new ServerResponse(34);
         }
 
-        return $movie->title->lastComments;
+        $response = [];
+        foreach ($movie->title->lastComments as $key => $comment) {
+            $response[$key] = $comment;
+            $response[$key]['author'] = User::findOne($comment['author']);
+        }
+
+        return $response;
     }
 
     public function actionPlatforms($id)
@@ -221,7 +228,16 @@ class MovieController extends ActiveController
             return new ServerResponse(34);
         }
 
-        return $model->title->comments;
+        $response = [];
+        foreach ($model->title->comments as $i => $comment) {
+            $response[$i] = $comment;
+            $response[$i]['author'] = User::findOne($comment['author']);
+            foreach ($comment['answers'] as $j => $answer) {
+                $response[$i]['answers'][$j]['author'] = User::findOne($answer['author']);
+            }
+        }
+
+        return $response;
 
     }
 
@@ -246,6 +262,10 @@ class MovieController extends ActiveController
             return new ServerResponse(5, ['score' => 'Field score should be a number']);
         } else if ($score < 0.5 || $score > 10) {
             return new ServerResponse(18);
+        }
+
+        if (!$movie = Movie::findOne(['id' => $id])) {
+            return new ServerResponse(34);
         }
 
         if (!$movie->isReleased()) {
