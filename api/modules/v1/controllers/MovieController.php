@@ -137,7 +137,7 @@ class MovieController extends ActiveController
             $response['following'] = false;
         }
         $response['watched'] = $movie->isWatched();
-        $response['myScore'] = $movie->myScore;
+        $response['myscore'] = $movie->myScore;
 
         return $response;
     }
