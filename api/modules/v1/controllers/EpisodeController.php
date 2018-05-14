@@ -326,7 +326,6 @@ return new ServerResponse(1);
 
                 if ($air_date >= $today) {
                     $released = false;
-                    //echo "Checking " . $title->cache['name'] . " ===> ";
                     $pending[$episode['air_date']] = [];
                     if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
                         if (!$model = $this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'], $episode)) {
@@ -382,9 +381,9 @@ return new ServerResponse(1);
         $episode->tvshow = $tvshow->id;
         $episode->season_num = $season_num;
         $episode->episode_num = $episode_num;
-        
-        $cache 
-        ? $episode->cache = json_encode($cache) 
+
+        $cache
+        ? $episode->cache = json_encode($cache)
         : $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num);
         //$new_episode->cache = json_encode($response['episodes'][$key]);
 
