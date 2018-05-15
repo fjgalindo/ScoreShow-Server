@@ -329,7 +329,7 @@ class MovieController extends ActiveController
 
             if ($release_date >= $today) {
                 $pending[$premiere_date] = [];
-                array_push($pending[$premiere_date], $movie->title);
+                array_push($pending[$premiere_date], $this->actionViewModel($movie->id));
             }
         }
         ksort($pending);
