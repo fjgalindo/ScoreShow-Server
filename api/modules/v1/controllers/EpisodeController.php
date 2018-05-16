@@ -315,25 +315,21 @@ return new ServerResponse(1);
         foreach ($tvshows as $key => $tvshow) {
             $title = $tvshow->title;
             $last_season = array_reverse($title['cache']['seasons'])[0];
-            if(!isset($last_season['episodes'])){
-                echo "NOT SET EPISODES!!!!!!!!!!!!!!!!!!!!!";
-                var_dump($last_season);
-                $last_season = array_reverse($title['cache']['seasons'])[1];
-            }
             $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
-            echo "TVSHOW => ".$title['cache']['name']." \n";
+            if(!count($season['episodes'])){
+                $last_season = array_reverse($title['cache']['seasons'])[1];
+                $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
+            }
             $released = true;
-            echo "Released: $released \n";
             for ($i = 0; $i < count($season['episodes']) && $released; $i++) {
                 $episode = $season['episodes'][$i];
-
                 $today = date("Y-m-d");
                 $air_date = $episode['air_date'];
-                echo "air_date => ".$air_date. "  || TODAY: $today \n";
                 if ($air_date >= $today) {
-                    echo "NEW EP ON => ". $episode['air_date']. " \n";
                     $released = false;
-                    $pending[$episode['air_date']] = [];
+                    if(!isset($pending[$episode['air_date']])){
+                        $pending[$episode['air_date']] = [];
+                    }
                     if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
                         if (!$model = $this->addEpisode($tvshow, $episode['season_number'], $episode['episode_number'], $episode)) {
                             return new ServerResponse(10);
@@ -348,7 +344,6 @@ return new ServerResponse(1);
             }
         }
         ksort($pending);
-        die();
         return $pending;
     }
 
