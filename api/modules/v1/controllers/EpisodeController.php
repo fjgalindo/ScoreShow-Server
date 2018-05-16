@@ -315,16 +315,23 @@ return new ServerResponse(1);
         foreach ($tvshows as $key => $tvshow) {
             $title = $tvshow->title;
             $last_season = array_reverse($title['cache']['seasons'])[0];
+            if(!isset($last_season['episodes'])){
+                echo "NOT SET EPISODES!!!!!!!!!!!!!!!!!!!!!";
+                var_dump($last_season);
+                $last_season = array_reverse($title['cache']['seasons'])[1];
+            }
             $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
-
+            echo "TVSHOW => ".$title['cache']['name']." \n";
             $released = true;
+            echo "Released: $released \n";
             for ($i = 0; $i < count($season['episodes']) && $released; $i++) {
                 $episode = $season['episodes'][$i];
 
-                $today = strtotime(date("Y-m-d"));
-                $air_date = strtotime($episode['air_date']);
-
+                $today = date("Y-m-d");
+                $air_date = $episode['air_date'];
+                echo "air_date => ".$air_date. "  || TODAY: $today \n";
                 if ($air_date >= $today) {
+                    echo "NEW EP ON => ". $episode['air_date']. " \n";
                     $released = false;
                     $pending[$episode['air_date']] = [];
                     if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
@@ -341,7 +348,7 @@ return new ServerResponse(1);
             }
         }
         ksort($pending);
-
+        die();
         return $pending;
     }
 
