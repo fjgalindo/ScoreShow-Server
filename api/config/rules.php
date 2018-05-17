@@ -42,7 +42,6 @@ return [
             'movie/popular' => 'movie/popular',
             'movie/top-rated' => 'movie/top-rated',
             'movie/platforms' => 'movie/platforms',
-            'movie/last-comments' => 'movie/last-comments',
             'movie/<id:\d+>' => 'movie/view-model',
             'movie/<id:\d+>/follow' => 'movie/follow',
             'movie/<id:\d+>/unfollow' => 'movie/unfollow',
@@ -50,6 +49,7 @@ return [
             'movie/<id:\d+>/unwatch' => 'movie/unwatch',
             'movie/<id:\d+>/score' => 'movie/score',
             'movie/<id:\d+>/comment' => 'movie/comment',
+            'movie/<id:\d+>/last-comments' => 'movie/last-comments',
             'movie/<id:\d+>/comments' => 'movie/view-comments',
 
             'movie/get/<id_tmdb:\d+>' => 'movie/get', // Called on search from tmdb (from tmdb search component)

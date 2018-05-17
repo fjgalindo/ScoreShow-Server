@@ -103,6 +103,9 @@ class UserController extends \yii\rest\ActiveController
 
             //$response['profile'] = $model;
             //$response['activity'] = $model->userActivity;
+            // #########################
+            // ==============> $response['following'] = $model->isFollowedByUser();
+            // #########################
             return $model;
         } else {
             return new ServerResponse(34);
@@ -145,7 +148,7 @@ class UserController extends \yii\rest\ActiveController
 
         $user->auth_key = Yii::$app->security->generateRandomString(32);
         $user->tmdb_gtoken = Yii::$app->TMDb->generateGuestSessionId();
-        $user->status = 0;
+        $user->status = Yii::$app->params['api']['v1']['user_default_status'];
         $user->password = Yii::$app->security->generatePasswordHash($user->password);
 
         if (!$user->validate()) {
@@ -173,21 +176,16 @@ class UserController extends \yii\rest\ActiveController
         }
 
         $user->updated_at = date("Y-m-d H-i-s");
-        if ($user->validate()) {
-            $user->save(false);
-        } else {
+        if (!$user->validate()) {
             return new ServerResponse(5, $user->errors);
         }
 
+        $user->save(false);
         return $user;
     }
 
     public function actionProfile()
     {
-        /* $response = [];
-        $user = Yii::$app->user->identity;
-        $response['profile'] = $user;
-        $response['activity'] = $user->getUserActivity(); */
         return Yii::$app->user->identity;
     }
 
@@ -207,7 +205,6 @@ class UserController extends \yii\rest\ActiveController
         } else {
             return new ServerResponse(34);
         }
-
         return new ServerResponse(1);
     }
 

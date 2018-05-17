@@ -453,6 +453,21 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         return $this->hasOne(Comment::className(), ['author' => 'id'])->where(['visible' => 1, 'answer_to' => null])->orderBy('date')->one();
     }
 
+    public function isFollowedByUser()
+    {
+        if ($result = (new \yii\db\Query())
+            ->select(['`follow_usr`.*'])
+            ->from('`follow_usr`')
+            ->where('`follow_usr`.`follower` = :follower AND `follow_usr`.`followed` = :followed')
+            ->addParams([':follower' => Yii::$app->user->identity->id, ':followed' => $this->id]) // Avoid SQL Injections
+            ->one()
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
     /* public function getLastWatch()
     {
     return $this->hasOne(Comment::className(), ['author' => 'id'])->where(['visible' => 1, 'answer_to' => null])->orderBy('date')->one();

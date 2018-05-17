@@ -142,7 +142,7 @@ class MovieController extends ActiveController
         return $response;
     }
 
-    public function actionLastcomments($id)
+    public function actionLastComments($id)
     {
         if (!$movie = Movie::findOne($id)) {
             return new ServerResponse(34);
