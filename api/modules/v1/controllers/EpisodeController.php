@@ -46,6 +46,7 @@ class EpisodeController extends ActiveController
                 'unwatch' => ['POST', 'OPTIONS'],
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
+                'last-comments' => ['GET', 'OPTIONS'],
                 'list-season' => ['GET', 'OPTIONS'],
                 'premieres' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
@@ -91,9 +92,9 @@ class EpisodeController extends ActiveController
         return $response;
     }
 
-    public function actionGetLastcomments($id, $season_num, $episode_num)
+    public function actionLastComments($id, $season, $episode)
     {
-        if (!$episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season_num, 'episode_num' => $episode_num])) {
+        if (!$episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode])) {
             return new ServerResponse(34);
         }
 
@@ -316,7 +317,7 @@ return new ServerResponse(1);
             $title = $tvshow->title;
             $last_season = array_reverse($title['cache']['seasons'])[0];
             $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
-            if(!count($season['episodes'])){
+            if (!count($season['episodes'])) {
                 $last_season = array_reverse($title['cache']['seasons'])[1];
                 $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
             }
@@ -327,7 +328,7 @@ return new ServerResponse(1);
                 $air_date = $episode['air_date'];
                 if ($air_date >= $today) {
                     $released = false;
-                    if(!isset($pending[$episode['air_date']])){
+                    if (!isset($pending[$episode['air_date']])) {
                         $pending[$episode['air_date']] = [];
                     }
                     if (!$model = Episode::findOne(['tvshow' => $tvshow->id, 'season_num' => $episode['season_number'], 'episode_num' => $episode['episode_number']])) {
@@ -337,8 +338,9 @@ return new ServerResponse(1);
                     }
                     $item = [];
                     $item['tvshow'] = $tvshow->title->cache;
-                    $item['tvshow']['tvshow_id'] = $tvshow->title->id;
+                    $item['tvshow']['_id'] = $tvshow->title->id;
                     $item['episode'] = $episode;
+                    $item['episode']['tvshow_id'] = $tvshow->title->id;
                     array_push($pending[$episode['air_date']], $item);
                 }
             }

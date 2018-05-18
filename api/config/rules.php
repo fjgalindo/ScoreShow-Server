@@ -25,13 +25,13 @@ return [
             'tv/<id:\d+>/season/<season:\d+>/watch' => 'episode/watch-season',
             'tv/<id:\d+>/season/<season:\d+>/unwatch' => 'episode/unwatch-season',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>' => 'episode/view-model',
-            'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/last-comments' => 'episode/last-comments',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/platforms' => 'episode/platforms',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/watch' => 'watch-episode/watch',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/unwatch' => 'watch-episode/unwatch',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/score' => 'episode/score',
             'tv/<id:\d+>/season/<season:\d+>/episode/<episode:\d+>/comment' => 'episode/comment',
             'tv/<id:\d+>/season/<season:\d+>/episode/<episode:\d+>/comments' => 'episode/view-comments',
+            'tv/<id:\d+>/season/<season:\d+>/episode/<episode:\d+>/last-comments' => 'episode/last-comments',
 
             'tv/get/<id_tmdb:\d+>' => 'tvshow/get', // Called on search from TMDb.
 
