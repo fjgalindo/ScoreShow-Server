@@ -32,19 +32,6 @@ return [
                     'class' => 'yii\web\JsonResponseFormatter',
                 ],
             ],
-
-                /*
-            'on beforeSend' => function ($event) {
-            $response = $event->sender;
-            if ($response->data !== null //&& Yii::$app->request->get('suppress_response_code')
-            ) {
-            $response->data = [
-            'success' => $response->isSuccessful,
-            'data' => $response->data,
-            ];
-            //$response->statusCode = 200;
-            }
-            },*/
         ],
         'user' => [
             'identityClass' => 'api\modules\v1\models\User',
@@ -71,7 +58,6 @@ return [
             ],
             'rules' => include 'rules.php',
         ],
-
     ],
     'params' => $params,
 ];

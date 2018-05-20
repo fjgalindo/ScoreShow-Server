@@ -57,6 +57,7 @@ class UserController extends \yii\rest\ActiveController
                 'unfollow-user' => ['POST', 'OPTIONS'],
                 'followeds' => ['GET', 'OPTIONS'],
                 'followeds-activity' => ['GET', 'OPTIONS'],
+                'find-by-name' => ['GET', 'OPTIONS'],
                 '*' => ['OPTIONS'],
             ],
         ];
@@ -129,9 +130,9 @@ class UserController extends \yii\rest\ActiveController
         return $comments;
     }
 
-    public function actionStats()
+    public function actionFindByName($keyword)
     {
-        return "OK";
+        return User::findByName($keyword);
     }
 
     public function actionRegister()

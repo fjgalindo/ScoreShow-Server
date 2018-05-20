@@ -2,6 +2,7 @@
 
 namespace api\modules\v1\controllers;
 
+use api\modules\v1\models\Episode;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\Title;
 use api\modules\v1\models\Tvshow;
@@ -98,7 +99,6 @@ class TvshowController extends ActiveController
         $title->cache = json_encode($tmdb_data);
         $title->last_update = date("Y-m-d H-i-s");
 
-        /* POSIBLE TRANSACCION AQUI */
         if ($title->save()) {
             $tvshow = new Tvshow();
             $tvshow->id = $title->id;
@@ -141,6 +141,15 @@ class TvshowController extends ActiveController
         }
 
         $response = $model->cache;
+
+        foreach ($response['seasons'] as $key => $season) {
+            if ($season['episode_count'] === count(Episode::getSeasonWatched($id, $season['season_number']))) {
+                $response['seasons'][$key]['completed'] = true;
+            } else {
+                $response['seasons'][$key]['completed'] = false;
+            }
+        }
+
         $response['_id'] = $model->id;
         $response['following'] = $model->isFollowedByUser();
 

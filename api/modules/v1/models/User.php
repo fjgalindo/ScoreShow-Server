@@ -118,6 +118,9 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     public function fields()
     {
         $fields = parent::fields();
+        if ($this->id != Yii::$app->user->identity->id) {
+            $fields['following'] = "followedByUser";
+        }
 
         // remove fields that contain sensitive information
         unset($fields['auth_key'], $fields['password'], $fields['password_reset_token']);
@@ -162,6 +165,17 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     public static function findByUsername($username)
     {
         return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
+    }
+
+    /**
+     * Finds user by name
+     *
+     * @param string $name
+     * @return static|null
+     */
+    public static function findByName($name)
+    {
+        return User::find()->where("`name` LIKE '%$name%'")->andWhere(['status' => self::STATUS_ACTIVE])->all();
     }
 
     /**
@@ -371,7 +385,7 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getFollowedUsers()
     {
-        return $this->hasMany(User::className(), ['id' => 'followed'])->viaTable('follow_usr', ['follower' => 'id']);
+        return $this->hasMany(User::className(), ['id' => 'followed'])->viaTable('follow_usr', ['follower' => 'id'])->where(['status' => self::STATUS_ACTIVE]);
     }
 
     /**
@@ -453,7 +467,7 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         return $this->hasOne(Comment::className(), ['author' => 'id'])->where(['visible' => 1, 'answer_to' => null])->orderBy('date')->one();
     }
 
-    public function isFollowedByUser()
+    public function getFollowedByUser()
     {
         if ($result = (new \yii\db\Query())
             ->select(['`follow_usr`.*'])
@@ -464,7 +478,6 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
         ) {
             return true;
         }
-
         return false;
     }
 

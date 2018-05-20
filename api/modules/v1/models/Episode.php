@@ -53,6 +53,17 @@ class Episode extends \yii\db\ActiveRecord
         ];
     }
 
+    public function afterFind()
+    {
+        $this->cache = json_decode($this->cache, true); // Formats JSON string into JSON object
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        $this->cache = json_decode($this->cache, true); // Formats JSON string into JSON object
+        return $insert;
+    }
+
     /**
      * @return \yii\db\ActiveQuery
      *//*
@@ -146,6 +157,15 @@ class Episode extends \yii\db\ActiveRecord
         return $response;
     }
 
+    public static function getSeasonWatched($tvshow_id, $season_num)
+    {
+        return WatchEpisode::find()->where([
+            'tvshow' => $tvshow_id,
+            'season_num' => $season_num,
+            'user' => Yii::$app->user->identity->id,
+        ])->all();
+    }
+
     public function getTMDbData()
     {
         return Yii::$app->TMDb->getEpisodeData($this->tvshowModel->title->id_tmdb, $this->season_num, $this->episode_num);
@@ -153,7 +173,7 @@ class Episode extends \yii\db\ActiveRecord
 
     public function isReleased()
     {
-        $release = strtotime($this->getTMDbData()['air_date']);
+        $release = strtotime($this->cache['air_date']);
         $today = strtotime(date("Y-m-d"));
         if ($release > $today) {
             return false;
@@ -161,9 +181,9 @@ class Episode extends \yii\db\ActiveRecord
         return true;
     }
 
-    public function isWatched($tvshow = null, $season = null, $episode = null)
+    public function getWatched()
     {
-        if (WatchEpisode::findOne(
+        if ($res = WatchEpisode::findOne(
             [
                 'tvshow' => $this->tvshow,
                 'season_num' => $this->season_num,
@@ -171,8 +191,11 @@ class Episode extends \yii\db\ActiveRecord
                 'user' => Yii::$app->user->identity->id,
             ]
         )) {
+            /* echo "===========================>>>>>>\n";
+            var_dump($res); */
             return true;
         }
+
         return false;
     }
 

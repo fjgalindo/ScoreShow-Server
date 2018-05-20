@@ -6,6 +6,9 @@ use yii\base\Component;
 
 class TMDb extends Component
 {
+
+    private const MAX_ATTEMPTS = 5;
+
     public $api_key;
     public $language;
     public $region;
@@ -38,13 +41,21 @@ class TMDb extends Component
         return $season;
     }
 
-    public function getEpisodeData($id_tmdb, $season, $episode)
+    public function getEpisodeData($id_tmdb, $season, $episode, $decode = true)
     {
         $curl = new curl\Curl();
-        $data = $curl->get("https://api.themoviedb.org/3/tv/$id_tmdb/season/$season/episode/$episode?api_key=$this->api_key&language=$this->language");
-        $chapter = json_decode($data, true);
+        $url = "https://api.themoviedb.org/3/tv/$id_tmdb/season/$season/episode/$episode?api_key=$this->api_key&language=$this->language";
+        $data = $curl->get($url);
+        $decoded_data = json_decode($data, true);
 
-        return $chapter;
+        $attempt = 0;
+        while (isset($decoded_data['status_code']) && $attempt < MAX_ATTEMPTS) {
+            $attempt++;
+            sleep(2);
+            $data = $curl->get($url);
+        }
+
+        return $decode ? $decoded_data : $data;
     }
 
     public function rateMovie($id_tmdb, $guest_session_id, $value)

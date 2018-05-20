@@ -4,6 +4,7 @@ namespace api\modules\v1\controllers;
 
 use api\modules\v1\models\Episode;
 use api\modules\v1\models\ServerResponse;
+use api\modules\v1\models\Title;
 use api\modules\v1\models\Tvshow;
 use api\modules\v1\models\User;
 use api\modules\v1\models\WatchEpisode;
@@ -43,7 +44,9 @@ class EpisodeController extends ActiveController
                 'view-model' => ['GET', 'OPTIONS'],
                 'score' => ['POST', 'OPTIONS'],
                 'watch' => ['POST', 'OPTIONS'],
+                'watch-season' => ['POST', 'OPTIONS'],
                 'unwatch' => ['POST', 'OPTIONS'],
+                'unwatch-season' => ['POST', 'OPTIONS'],
                 'view-comments' => ['GET', 'OPTIONS'],
                 'comment' => ['POST', 'OPTIONS'],
                 'last-comments' => ['GET', 'OPTIONS'],
@@ -79,14 +82,10 @@ class EpisodeController extends ActiveController
             }
         }
 
-        $response = json_decode($model->cache, true);
+        $response = $model->cache;
 
-        $response['watched'] = $model->isWatched();
+        $response['watched'] = $model->watched;
         $response['tvshow_id'] = $id;
-        /*
-        $response['last_comments'] = $model->getLastComments();
-        $response['platforms'] = $model->platformLinks;
-         */
         $response['myscore'] = $model->myScore;
 
         return $response;
@@ -153,73 +152,87 @@ class EpisodeController extends ActiveController
 
     public function actionWatch($id, $season, $ep)
     {
-        if (!$tv_episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) { // Check if movie exists
+        if (!$episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) {
             return new ServerResponse(34);
         }
 
-        if (!$tv_episode->isReleased()) {
-            return new ServerResponse();
+        if (!$episode->isReleased()) {
+            return new ServerResponse(14);
         }
 
         return Yii::$app->controller->module->runAction(
-            'watch-episode/watch', ['id' => $tv_episode->tvshow, 'season' => $season, 'ep' => $ep]
+            'watch-episode/watch', ['id' => $episode->tvshow, 'season' => $season, 'ep' => $ep]
         );
     }
 
     public function actionUnwatch($id, $season, $ep)
     {
-        if (!$tv_episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) {
+        if (!$episode = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) {
             return new ServerResponse(34);
         }
 
         return Yii::$app->controller->module->runAction(
-            'watch-episode/unwatch', ['id' => $tv_episode->tvshow, 'season' => $season, 'ep' => $ep]
+            'watch-episode/unwatch', ['id' => $episode->tvshow, 'season' => $season, 'ep' => $ep]
         );
 
     }
-/*
-public function actionWatchSeason($id, $season)
-{
-$uid = Yii::$app->user->identity->id;
-if (!$episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all()) {
-return new ServerResponse(34);
-}
 
-foreach ($episodes as $key => $episode) {
-// If is released and I don't check it as watched
-if ($episode->isReleased() && !$model = WatchEpisode::findOne(
-[
-'user' => $uid,
-'tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode->episode_num,
-])) {
-$model = new WatchEpisode();
-$model->user = $uid;
-$model->tvshow = $episode->tvshow;
-$model->season_num = $episode->season_num;
-$model->episode_num = $episode->episode_num;
-$model->date = date("Y-m-d H-i-s");
+    public function actionWatchSeason($id, $season)
+    {
+        $uid = Yii::$app->user->identity->id;
+        if (!$episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all()) {
+            // echo "NOT EPISODES!\n";
+            if (!$this->updateSeason($id, $season)) {
+                // echo "ERROR 34\n";
+                return new ServerResponse(34);
+            } else {
+                $episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all();
+            }
+        }
 
-if (!$model->save()) {
-return new ServerResponse(10);
-}
-}
-}
+        $bulkdata = [];
+        $released = true;
+        for ($i = 0; $i < count($episodes) && $released; $i++) {
+            $episode = $episodes[$i];
 
-return new ServerResponse(1);
-}
+            if ($episode->isReleased()) {
+                // echo "$episode->episode_num IS RELEASED !!!!!!!!!!!!!!!!!!!!! \n";
+                if (!$episode->watched) {
+                    // echo "NOT WATCHED !!!!!!";
+                    array_push($bulkdata,
+                        [$uid, $episode->tvshow, $episode->season_num, $episode->episode_num, date("Y-m-d H-i-s")]
+                    );
+                }
+            } else {
+                $released = false;
+            }
+        }
+        $num = null;
+        if (count($bulkdata)) {
+            $num = Yii::$app->db
+                ->createCommand()
+                ->batchInsert(WatchEpisode::tableName(), ['user', 'tvshow', 'season_num', 'episode_num', 'date'], $bulkdata)
+                ->execute();
+        }
 
-public function actionUnwatchSeason($id, $season)
-{
-$uid = Yii::$app->user->identity->id;
-if ($episodes_watched = WatchEpisode::find()->where(['user' => $uid, 'tvshow' => $id, 'season_num' => $season])->all()) {
-foreach ($episodes_watched as $key => $episode) {
-$episode->delete();
-}
-}
+        // echo "Bulkdata ##########\n";
+        // var_dump($bulkdata);
+        // echo "NUM #####\n";
+        // var_dump($num);
+        // // die();
+        return new ServerResponse(1);
+    }
 
-return new ServerResponse(1);
-}
- */
+    public function actionUnwatchSeason($id, $season)
+    {
+        $uid = Yii::$app->user->identity->id;
+        if ($episodes_watched = WatchEpisode::find()->where(['user' => $uid, 'tvshow' => $id, 'season_num' => $season])->all()) {
+            WatchEpisode::deleteAll(['user' => $uid, 'tvshow' => $id, 'season_num' => $season]);
+        }
+
+        return new ServerResponse(1);
+    }
+
     public function actionListSeason($id, $season)
     {
         if (!$tvshow = Tvshow::findOne($id)) {
@@ -227,12 +240,15 @@ return new ServerResponse(1);
         }
 
         $id_tmdb = $tvshow->title->id_tmdb;
+
         $response = Yii::$app->TMDb->getSeasonData($id_tmdb, $season);
         $response['tvshow_id'] = $tvshow->id;
+        $response['completed'] = false;
+
+        $watchedN = 0;
         foreach ($response['episodes'] as $key => $episode) {
             if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
                 $this->addEpisode($tvshow, $season, $episode['episode_number'], $episode);
-
             } else {
                 if ($watch = WatchEpisode::findOne(
                     [
@@ -241,7 +257,8 @@ return new ServerResponse(1);
                         'episode_num' => $episode['episode_number'],
                         'user' => Yii::$app->user->identity->id,
                     ])) {
-                    $response['episodes'][$key]['watched'] = $watch->date;
+                    $watchedN++;
+                    $response['episodes'][$key]['watched'] = true;
                     $response['episodes'][$key]['myscore'] = $watch->score;
                 } else {
                     $response['episodes'][$key]['watched'] = false;
@@ -249,6 +266,10 @@ return new ServerResponse(1);
 
                 }
             }
+        }
+
+        if ($watchedN === count($response['episodes'])) {
+            $response['completed'] = true;
         }
 
         return $response;
@@ -321,6 +342,7 @@ return new ServerResponse(1);
                 $last_season = array_reverse($title['cache']['seasons'])[1];
                 $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
             }
+
             $released = true;
             for ($i = 0; $i < count($season['episodes']) && $released; $i++) {
                 $episode = $season['episodes'][$i];
@@ -349,22 +371,25 @@ return new ServerResponse(1);
         return $pending;
     }
 
-    public function updateCache($tvshow, $season, $ep)
+    public function updateSeason($id, $season)
     {
-        $episode = Episode::findOne(['tvshow' => $tvshow, 'season_num' => $season, 'episode_num' => $ep]);
+        $tvshow = Tvshow::findOne(['id' => $id]);
+        $season_data = Yii::$app->TMDb->getSeasonData($tvshow->title->id_tmdb, $season);
+        foreach ($season_data['episodes'] as $episode) {
+            if (!Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode['episode_number']])) {
+                $res = $this->addEpisode($tvshow, $season, $episode['episode_number'], $episode);
+            } else {
+                $res = $this->updateCache($tvshow, $season, $episode['episode_number']);
+            }
 
-        $episode->cache = json_encode($episode->getTMDbData(), true);
-
-        $episode->last_update = date("Y-m-d H-i-s");
-
-        if ($episode->save()) {
-            return $episode;
+            if (!$res) {
+                return new ServerResponse(10);
+            }
         }
-
-        return false;
+        return true;
     }
 
-    public function updateSeason($id, $season)
+    public function updateCache($tvshow, $season, $ep)
     {
         $episode = Episode::findOne(['tvshow' => $tvshow, 'season_num' => $season, 'episode_num' => $ep]);
 
@@ -388,10 +413,9 @@ return new ServerResponse(1);
 
         $cache
         ? $episode->cache = json_encode($cache)
-        : $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num);
-        //$new_episode->cache = json_encode($response['episodes'][$key]);
+        : $episode->cache = Yii::$app->TMDb->getEpisodeData($tvshow->title->id_tmdb, $season_num, $episode_num, false);
 
-        $episode->last_update = date("Y-m-d H-i-s");
+        //$episode->last_update = date("Y-m-d H-i-s");
 
         if (!$episode->validate()) {
             return false;

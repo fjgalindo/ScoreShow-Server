@@ -21,7 +21,7 @@ class WatchEpisodeController extends \yii\rest\ActiveController
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::className(),
             'cors' => [
-                'Origin' => ['http: //localhost:8100','*'],
+                'Origin' => ['http: //localhost:8100', '*'],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -48,7 +48,7 @@ class WatchEpisodeController extends \yii\rest\ActiveController
     {
         $actions = parent::actions();
         //Eliminamos acciones de crear y eliminar apuntes. Eliminamos update para personalizarla
-        unset($actions['delete'], $actions['create'], $actions['view'],$actions['update'], $actions['index']);
+        unset($actions['delete'], $actions['create'], $actions['view'], $actions['update'], $actions['index']);
         return $actions;
     }
 
@@ -71,7 +71,6 @@ class WatchEpisodeController extends \yii\rest\ActiveController
             if (!$model->save()) {
                 return new ServerResponse(10, $model->errors);
             }
-
         }
 
         return new ServerResponse(1);
@@ -93,48 +92,7 @@ class WatchEpisodeController extends \yii\rest\ActiveController
 
         return new ServerResponse(1);
     }
-/*
-public function actionWatchSeason($id, $season)
-{
-$response = [];
-$uid = Yii::$app->user->identity->id;
 
-if (!$model = WatchEpisode::findOne(
-[
-'user' => $uid,
-'tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep,
-])
-) {
-$model = new WatchEpisode();
-$model->user = Yii::$app->user->identity->id;
-$model->tvshow = $id;
-$model->season_num = $season;
-$model->episode_num = $ep;
-}
-$model->date = date("Y-m-d H-i-s");
-
-if (!$model->save()) {
-return new ServerResponse(10);
-}
-return new ServerResponse(1);
-}
-
-public function actionUnwatchSeason($id, $season)
-{
-$uid = Yii::$app->user->identity->id;
-if ($model = WatchEpisode::findOne(
-[
-'user' => $uid,
-'tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep,
-])) {
-if (!$model->delete()) {
-return new ServerResponse(10);
-}
-}
-
-return new ServerResponse(1);
-}
- */
     public function actionScore($id, $season, $ep, $score)
     {
         $uid = Yii::$app->user->identity->id;

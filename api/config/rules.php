@@ -26,8 +26,8 @@ return [
             'tv/<id:\d+>/season/<season:\d+>/unwatch' => 'episode/unwatch-season',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>' => 'episode/view-model',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/platforms' => 'episode/platforms',
-            'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/watch' => 'watch-episode/watch',
-            'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/unwatch' => 'watch-episode/unwatch',
+            'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/watch' => 'episode/watch',
+            'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/unwatch' => 'episode/unwatch',
             'tv/<id:\d+>/season/<season:\d+>/episode/<ep:\d+>/score' => 'episode/score',
             'tv/<id:\d+>/season/<season:\d+>/episode/<episode:\d+>/comment' => 'episode/comment',
             'tv/<id:\d+>/season/<season:\d+>/episode/<episode:\d+>/comments' => 'episode/view-comments',
@@ -64,6 +64,7 @@ return [
             'user/<id:\d+>/follow' => 'user/follow-user',
             'user/<id:\d+>/unfollow' => 'user/unfollow-user',
             'user/<id:\d+>/activity' => 'user/activity',
+            'user/find' => 'user/find-by-name',
 
             /* === AUTH USER ACTIONS === */
             'my' => 'user/profile',
