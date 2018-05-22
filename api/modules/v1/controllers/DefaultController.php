@@ -2,10 +2,10 @@
 
 namespace api\modules\v1\controllers;
 
-use Yii;
-use yii\db\Exception;
 use api\modules\v1\models\ServerResponse;
+use Yii;
 use yii\filters\auth\HttpBearerAuth;
+use yii\filters\Cors;
 
 
 /**
@@ -13,32 +13,57 @@ use yii\filters\auth\HttpBearerAuth;
  */
 class DefaultController extends \yii\rest\ActiveController
 {
-    
-    public $modelClass='';
+
+    public $modelClass = '';
 
     public function behaviors()
     {
         $behaviors = parent::behaviors();
+
+        unset($behaviors['authenticator']);
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => Cors::className(),
+            'cors' => [
+                'Origin' => ['*'],
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+            ],
+        ];
+
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
+            'except' => ['image-tmdb'],
         ];
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'search-tmdb' => ['GET'],
+                'search-tmdb' => ['GET', 'OPTIONS'],
+                'image-tmdb' => ['GET', 'OPTIONS'],
             ],
         ];
 
         return $behaviors;
     }
 
-    public function actionSearchTmdb($query, $page = 1){
-        if(!$query){
-            return new ServerResponse(5, ['query'=>'Query text must be set']);
+    public function actionSearchTmdb($query, $page = 1)
+    {
+        if (!$query) {
+            return new ServerResponse(5, ['query' => 'Query text must be set']);
         }
 
-        $results = Yii::$app->TMDb->search($query, "multi", $page);
-        return $results;
+        return Yii::$app->TMDb->search($query, "multi", $page);
     }
-    
+
+    public function actionImageTmdb($img = "")
+    {
+        return Yii::$app->TMDb->getImageUrl($img);
+    }
+
+    public function actionImage($img)
+    {
+        return "IN CONSTRUCTION";
+    }
 }

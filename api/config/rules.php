@@ -68,7 +68,7 @@ return [
 
             /* === AUTH USER ACTIONS === */
             'my' => 'user/profile',
-            'my/update' => 'user/update',
+            'my/update' => 'user/update-model',
             'my/comments' => 'user/my-comments',
             'my/stats' => 'user/my-stats',
             'my/followeds' => 'user/followeds',
@@ -80,6 +80,7 @@ return [
             'login' => 'user/auth',
 
             'search' => 'default/search-tmdb',
+            'image/tmdb' => 'default/image-tmdb',
 
             '/' => 'default/index',
         ],

@@ -12,10 +12,21 @@ class TMDb extends Component
     public $api_key;
     public $language;
     public $region;
+    public $img_url;
 
-    /*public function init(){
+    public function init()
+    {
+        parent::init();
 
-    }*/
+        $curl = new curl\Curl();
+        $data = $curl->setHeaders([
+            'content-type' => 'application/json',
+            'charset' => 'utf-8',
+        ])->get("https://api.themoviedb.org/3/configuration?api_key=$this->api_key");
+
+        $data = json_decode($data, true);
+        $this->img_url = $data['images']['base_url'];
+    }
 
     public function getTitleData($id_tmdb, $type, $ext = [], $decode = true)
     {
@@ -181,6 +192,11 @@ class TMDb extends Component
         $data = $curl->get("https://api.themoviedb.org/3/$type/top_rated?api_key=$this->api_key&language=$this->language&page=$page");
         $top_rated = json_decode($data, true);
         return $top_rated;
+    }
+
+    public function getImageUrl($img = "", $size = "w1280")
+    {
+        return $this->img_url . "$size" . "$img";
     }
 
 }

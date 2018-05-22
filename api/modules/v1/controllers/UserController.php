@@ -9,6 +9,7 @@ use api\modules\v1\models\User;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\Cors;
+use yii\web\UploadedFile;
 
 class UserController extends \yii\rest\ActiveController
 {
@@ -49,7 +50,7 @@ class UserController extends \yii\rest\ActiveController
                 'view-model' => ['GET', 'OPTIONS'],
                 'profile' => ['GET', 'OPTIONS'],
                 'activity' => ['GET', 'OPTIONS'],
-                'update' => ['PUT', 'POST', 'OPTIONS'],
+                'update-model' => ['PUT', 'POST', 'OPTIONS'],
                 'my' => ['GET', 'OPTIONS'],
                 'my-comments' => ['GET', 'OPTIONS'],
                 'my-stats' => ['GET', 'OPTIONS'],
@@ -159,7 +160,7 @@ class UserController extends \yii\rest\ActiveController
         return ['auth_key' => $user->auth_key];
     }
 
-    public function actionUpdate()
+    public function actionUpdateModel()
     {
         $user = Yii::$app->user->identity;
         $user->scenario = $user::SCENARIO_UPDATE;
@@ -176,6 +177,12 @@ class UserController extends \yii\rest\ActiveController
             $user->password = Yii::$app->security->generatePasswordHash($user->password);
         }
 
+        $profile_img = UploadedFile::getInstancesByName('profile_img');
+        $background_img = UploadedFile::getInstancesByName('background_img');
+
+        $profile_img && $this->handleUploadImage($profile_img);
+        $background_img && $this->handleUploadImage($background_img);
+        die();
         $user->updated_at = date("Y-m-d H-i-s");
         if (!$user->validate()) {
             return new ServerResponse(5, $user->errors);
@@ -183,6 +190,11 @@ class UserController extends \yii\rest\ActiveController
 
         $user->save(false);
         return $user;
+    }
+
+    public function handleUploadImage($file)
+    {
+        var_dump($file);
     }
 
     public function actionProfile()
