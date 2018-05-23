@@ -91,7 +91,8 @@ class CommentController extends ActiveController
 
         if ($comment = Comment::findOne(['id' => $id])) {
             if ($comment->author = Yii::$app->user->identity->id) {
-                $comment->delete();
+                $comment->content = "";
+                $comment->save();
                 return new ServerResponse(1);
             } else {
                 return new ServerResponse(3);
