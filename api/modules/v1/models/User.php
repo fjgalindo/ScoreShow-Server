@@ -44,6 +44,9 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
     const STATUS_DELETED = 0;
     const STATUS_ACTIVE = 1;
 
+    const IMG_DIR = "../../common/images/users/";
+    const DEFAULT_PROFILE_IMG = "placeholder.png";
+
     public $repeat_password;
 
     /**
@@ -138,6 +141,29 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
             'value' => new Expression('NOW()'),
         ],
         ];
+    }
+
+    public function afterFind()
+    {
+        if ($this->profile_img) {
+            $profile_img = static::IMG_DIR . $this->profile_img;
+            !file_exists($profile_img) && $this->profile_img = static::DEFAULT_PROFILE_IMG;
+        } else {
+            $this->profile_img = static::DEFAULT_PROFILE_IMG;
+        }
+        if ($this->background_img) {
+            $background_img = static::IMG_DIR . $this->background_img;
+            !file_exists($background_img) && $this->background_img = "";
+        } else {
+            $this->background_img = "";
+
+        }
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        $this->profile_img === static::DEFAULT_PROFILE_IMG && $this->profile_img = "";
+        return $insert;
     }
 
     /**
@@ -425,11 +451,86 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
      */
     public function getWatchedMovies()
     {
-        // if ($this->id === Yii::$app->user->identity->id) {
-        // } else {
-        //     return $this->hasMany(Movie::className(), ['id' => 'movie'])->viaTable('watch_movie', ['user' => 'id']);
-        // }
         return $this->hasMany(Title::className(), ['id' => 'movie'])->where('`id` IN (SELECT movie FROM watch_movie)')->viaTable('watch_movie', ['user' => 'id']);
+    }
+
+    public function setBackgroundImage($img)
+    {
+        if ($filename = $this->handleImageUpload($img, 0.6)) {
+            $old_img = $this->background_img;
+            if ($old_img) {
+                $src = static::IMG_DIR . $old_img;
+                if (file_exists($src)) {
+                    unlink($src);
+                }
+            }
+            $this->background_img = $filename;
+        } else {
+            return new ServerResponse(10);
+        };
+    }
+
+    public function setProfileImage($img)
+    {
+        if ($filename = $this->handleImageUpload($img, 0.5)) {
+            $old_img = $this->profile_img;
+            if ($old_img && $old_img != static::DEFAULT_PROFILE_IMG) {
+                $src = static::IMG_DIR . $old_img;
+                if (file_exists($src)) {
+                    unlink($src);
+                }
+            }
+            $this->profile_img = $filename;
+        } else {
+            return new ServerResponse(10);
+        };
+    }
+
+    public function handleImageUpload($img, $level)
+    {
+        $tmp = $img->tempName;
+        if ($img->error || !exif_imagetype($tmp)) {
+            return false;
+        }
+
+        $img_file = substr(mt_rand(), 0, 10) . '.' . $img->extension;
+        $src = static::IMG_DIR . $img_file;
+
+        // Tamaño original imagen.
+        $size = getimagesize($tmp);
+
+        // Obtenemos el tipo mime de la imagen.
+        $file_type = strtolower($size['mime']);
+
+        //Filtramos por el tipo de imagen
+        if ($file_type == 'image/jpeg') {
+            $orig = imagecreatefromjpeg($tmp);
+        } elseif ($file_type == 'image/png') {
+            $orig = imagecreatefrompng($tmp);
+        } else {
+            return false;
+        }
+
+        // Nuevos tamaños de la imagen.
+        // $w = 250;
+        // $h = 250;
+
+        $w = $size[0] * $level;
+        $h = $size[1] * $level;
+
+        // Reducimos el tamaño de la imagen original.
+        $min = imagecreatetruecolor($w, $h);
+        imagecopyresampled($min, $orig, 0, 0, 0, 0, $w, $h, $size[0], $size[1]);
+        if ($file_type == 'image/jpeg') {
+            $ret = imagejpeg($min, $tmp, 90);
+        } //Calidad 90%
+        else {
+            $ret = imagepng($min, $tmp, 3);
+        } //Compresión 3
+        if ($ret && $img->saveAs($src)) {
+            return $img_file;
+        }
+        return false;
 
     }
 

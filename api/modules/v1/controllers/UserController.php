@@ -51,6 +51,7 @@ class UserController extends \yii\rest\ActiveController
                 'profile' => ['GET', 'OPTIONS'],
                 'activity' => ['GET', 'OPTIONS'],
                 'update-model' => ['PUT', 'POST', 'OPTIONS'],
+                'upload-image' => ['PUT', 'POST', 'OPTIONS'],
                 'my' => ['GET', 'OPTIONS'],
                 'my-comments' => ['GET', 'OPTIONS'],
                 'my-stats' => ['GET', 'OPTIONS'],
@@ -154,7 +155,7 @@ class UserController extends \yii\rest\ActiveController
         $user->password = Yii::$app->security->generatePasswordHash($user->password);
 
         if (!$user->validate()) {
-            return new ServerResponse(5, $user->errors);
+            return new ServerResponse(5, "Datos de registro incorrectos. Revisa la información e intentalo de nuevo más tarde", $user->errors);
         }
         $user->save(false);
         return ['auth_key' => $user->auth_key];
@@ -171,30 +172,54 @@ class UserController extends \yii\rest\ActiveController
         // If user wants to change password
         if (isset($params['password']) || isset($params['repeat_password'])) {
             if (!$user->validateModifiedPassword()) { // If passwords are not valid
-                return new ServerResponse(5, $user->errors);
+                return new ServerResponse(5, "", $user->errors);
             }
 
             $user->password = Yii::$app->security->generatePasswordHash($user->password);
         }
 
-        $profile_img = UploadedFile::getInstancesByName('profile_img');
-        $background_img = UploadedFile::getInstancesByName('background_img');
-
-        $profile_img && $this->handleUploadImage($profile_img);
-        $background_img && $this->handleUploadImage($background_img);
-        die();
         $user->updated_at = date("Y-m-d H-i-s");
         if (!$user->validate()) {
-            return new ServerResponse(5, $user->errors);
+            return new ServerResponse(5, "", $user->errors);
         }
 
         $user->save(false);
         return $user;
     }
 
-    public function handleUploadImage($file)
+    public function actionUploadImage()
     {
-        var_dump($file);
+        $user = Yii::$app->user->identity;
+        $user->scenario = $user::SCENARIO_UPDATE;
+
+        $old_profile_img = $user->profile_img;
+        $old_background_img = $user->background_img;
+
+        if ($background_img = UploadedFile::getInstanceByName('background_img')) {
+            $user->setBackgroundImage($background_img);
+            $user->save() && $this->removeImage($old_background_img);
+        }
+
+        if ($profile_img = UploadedFile::getInstanceByName('profile_img')) {
+            $user->setProfileImage($profile_img);
+            $user->save() && $this->removeImage($old_profile_img);
+        }
+
+        if (!$profile_img && !$background_img) {
+            return new ServerResponse(5, "You must upload profile_img or background_img");
+        }
+
+        return new ServerResponse(1);
+    }
+
+    public function removeImage($file)
+    {
+        if ($file && $file != User::DEFAULT_PROFILE_IMG) {
+            $src = User::IMG_DIR . $file;
+            if (file_exists($src)) {
+                unlink($src);
+            }
+        }
     }
 
     public function actionProfile()

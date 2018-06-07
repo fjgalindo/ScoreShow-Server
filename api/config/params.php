@@ -5,7 +5,7 @@ return [
         'v1' => [
             'comment_default_visibility' => 1,
             'user_default_status' => 1,
-            'timeToRefeshCache' => "+1 week",
+            'timeToRefeshCache' => "+2 days",
         ],
     ],
 ];

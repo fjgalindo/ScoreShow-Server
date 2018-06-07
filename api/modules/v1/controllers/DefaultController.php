@@ -3,10 +3,10 @@
 namespace api\modules\v1\controllers;
 
 use api\modules\v1\models\ServerResponse;
+use api\modules\v1\models\User;
 use Yii;
 use yii\filters\auth\HttpBearerAuth;
 use yii\filters\Cors;
-
 
 /**
  * Default controller for the `v1` module
@@ -35,17 +35,23 @@ class DefaultController extends \yii\rest\ActiveController
 
         $behaviors['authenticator'] = [
             'class' => HttpBearerAuth::className(),
-            'except' => ['image-tmdb'],
+            'except' => ['image-tmdb', 'image', 'say-hello'],
         ];
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
                 'search-tmdb' => ['GET', 'OPTIONS'],
                 'image-tmdb' => ['GET', 'OPTIONS'],
+                'image' => ['GET', 'OPTIONS'],
             ],
         ];
 
         return $behaviors;
+    }
+
+    public function actionSayHello()
+    {
+        return "Finally, hello from the ScoreShow API!";
     }
 
     public function actionSearchTmdb($query, $page = 1)
@@ -62,8 +68,11 @@ class DefaultController extends \yii\rest\ActiveController
         return Yii::$app->TMDb->getImageUrl($img);
     }
 
-    public function actionImage($img)
+    public function actionImage($filename)
     {
-        return "IN CONSTRUCTION";
+        $path = User::IMG_DIR . $filename;
+        if (file_exists($path)) {
+            return Yii::$app->response->sendFile($path);
+        }
     }
 }

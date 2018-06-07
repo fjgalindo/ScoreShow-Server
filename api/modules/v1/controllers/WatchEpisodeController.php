@@ -2,6 +2,7 @@
 
 namespace api\modules\v1\controllers;
 
+use api\modules\v1\models\FollowTitle;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\WatchEpisode;
 use Yii;
@@ -55,6 +56,17 @@ class WatchEpisodeController extends \yii\rest\ActiveController
     public function actionWatch($id, $season, $ep)
     {
         $uid = Yii::$app->user->identity->id;
+
+        if (!$model = FollowTitle::findOne(
+            [
+                'title' => $id, 'user' => $uid,
+            ])
+        ) {
+            Yii::$app->controller->module->runAction(
+                'follow-title/follow', ['title_id' => $id]
+            );
+        }
+
         if (!$model = WatchEpisode::findOne(
             [
                 'user' => $uid,

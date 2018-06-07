@@ -3,6 +3,7 @@
 namespace api\modules\v1\controllers;
 
 use api\modules\v1\models\Episode;
+use api\modules\v1\models\FollowTitle;
 use api\modules\v1\models\ServerResponse;
 use api\modules\v1\models\Title;
 use api\modules\v1\models\Tvshow;
@@ -72,18 +73,18 @@ class EpisodeController extends ActiveController
     {
         $response = [];
 
+        // Si el episodio no existe en la base de datos, el servidor devuelve un error específico.
         if (!$model = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $ep])) {
             return new ServerResponse(34);
         }
 
-        if ($model->needsUpdate()) {
+        if ($model->needsUpdate()) { // Si el episodio necesita actualizarse, actualiza el campo cache
             if (!$model = $this->updateCache($model->tvshow, $model->season_num, $model->episode_num)) {
                 return new ServerResponse(10);
             }
         }
 
         $response = $model->cache;
-
         $response['watched'] = $model->watched;
         $response['tvshow_id'] = $id;
         $response['myscore'] = $model->myScore;
@@ -181,24 +182,29 @@ class EpisodeController extends ActiveController
     {
         $uid = Yii::$app->user->identity->id;
         if (!$episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all()) {
-            // echo "NOT EPISODES!\n";
             if (!$this->updateSeason($id, $season)) {
-                // echo "ERROR 34\n";
                 return new ServerResponse(34);
             } else {
                 $episodes = Episode::find()->where(['tvshow' => $id, 'season_num' => $season])->all();
             }
         }
 
+        if (!$model = FollowTitle::findOne(
+            [
+                'title' => $id, 'user' => $uid,
+            ])
+        ) {
+            Yii::$app->controller->module->runAction(
+                'follow-title/follow', ['title_id' => $id]
+            );
+        }
+
         $bulkdata = [];
         $released = true;
         for ($i = 0; $i < count($episodes) && $released; $i++) {
             $episode = $episodes[$i];
-
             if ($episode->isReleased()) {
-                // echo "$episode->episode_num IS RELEASED !!!!!!!!!!!!!!!!!!!!! \n";
                 if (!$episode->watched) {
-                    // echo "NOT WATCHED !!!!!!";
                     array_push($bulkdata,
                         [$uid, $episode->tvshow, $episode->season_num, $episode->episode_num, date("Y-m-d H-i-s")]
                     );
@@ -214,12 +220,6 @@ class EpisodeController extends ActiveController
                 ->batchInsert(WatchEpisode::tableName(), ['user', 'tvshow', 'season_num', 'episode_num', 'date'], $bulkdata)
                 ->execute();
         }
-
-        // echo "Bulkdata ##########\n";
-        // var_dump($bulkdata);
-        // echo "NUM #####\n";
-        // var_dump($num);
-        // // die();
         return new ServerResponse(1);
     }
 
@@ -338,9 +338,11 @@ class EpisodeController extends ActiveController
             $title = $tvshow->title;
             $last_season = array_reverse($title['cache']['seasons'])[0];
             $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
-            if (!count($season['episodes'])) {
-                $last_season = array_reverse($title['cache']['seasons'])[1];
-                $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
+            if ($season['episodes']) {
+                if (!count($season['episodes'])) {
+                    $last_season = array_reverse($title['cache']['seasons'])[1];
+                    $season = Yii::$app->TMDb->getSeasonData($title->id_tmdb, $last_season['season_number']);
+                }
             }
 
             $released = true;

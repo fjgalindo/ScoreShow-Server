@@ -18,7 +18,7 @@ class ServerResponse extends \yii\web\Response
 {
     public $code;
 
-    public function __construct($code, $extra_info = null)
+    public function __construct($code, $message = "", $extra_info = null)
     {
         $responses = include "server/responses.php";
 
@@ -29,7 +29,8 @@ class ServerResponse extends \yii\web\Response
         if (isset($responses[$code])) {
             $response = $responses[$code];
             $this->data = $response['data'];
-            $extra_info ? $this->data['extra_info'] = $extra_info : '';
+            $message && $this->data['status_message'] = $message;
+            $this->data['extra_info'] = $extra_info && $extra_info;
             $this->statusCode = $response['status'];
         } else {
             throw new \yii\web\ServerErrorHttpException("Server error: Trying to send invalid status code $code", 50);
