@@ -30,7 +30,7 @@ class ServerResponse extends \yii\web\Response
             $response = $responses[$code];
             $this->data = $response['data'];
             $message && $this->data['status_message'] = $message;
-            $this->data['extra_info'] = $extra_info && $extra_info;
+            $extra_info && $this->data['extra_info'] = $extra_info;
             $this->statusCode = $response['status'];
         } else {
             throw new \yii\web\ServerErrorHttpException("Server error: Trying to send invalid status code $code", 50);

@@ -196,7 +196,6 @@ class MovieController extends ActiveController
 
     public function actionWatch($id)
     {
-
         if (!$movie = Movie::findOne($id)) {
             return new ServerResponse(34);
         }

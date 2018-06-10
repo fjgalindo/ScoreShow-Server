@@ -38,16 +38,16 @@ class WatchMovieController extends ActiveController
         $behaviors['verbs'] = [
             'class' => \yii\filters\VerbFilter::className(),
             'actions' => [
-                'watch'=> ['POST', 'OPTIONS'],
-                'unwatch'=> ['POST', 'OPTIONS'],
+                'watch' => ['POST', 'OPTIONS'],
+                'unwatch' => ['POST', 'OPTIONS'],
                 //'update'=> ['POST', 'OPTIONS'],
-                'score'=> ['POST', 'OPTIONS'],
+                'score' => ['POST', 'OPTIONS'],
             ],
         ];
 
         return $behaviors;
     }
-    
+
     public function actions()
     {
         $actions = parent::actions();
@@ -58,71 +58,33 @@ class WatchMovieController extends ActiveController
     public function actionWatch($id)
     {
         $response = [];
+        $uid = Yii::$app->user->identity->id;
+        if (WatchMovie::findOne(['user' => $uid, 'movie' => $id])) {
+            return new ServerResponse(1);
+        }
 
         $model = new WatchMovie();
         $model->user = Yii::$app->user->identity->id;
         $model->movie = $id;
         $model->date = date("Y-m-d H-i-s");
-        try {
-            if ($model->save()
-                // || $this->actionUpdate($id)
-            ) {
-                $response['message'] = "Success";
-                $response['error'] = 0;
 
-            } else if ($this->actionUpdate($id)) {
-                $response['message'] = "Updated entry";
-                $response['error'] = 0;
-
-            } else {
-                throw new Exception("Unknown error");
-            }
-        } catch (yii\db\Exception $e) {
-            $response['message'] = "No se han podido guardar los cambios.";
-            $response['db_message'] = $e->getName();
-            $response['error'] = "27";
+        if (!$model->save()) {
+            return new ServerResponse(10);
         }
-        return $response;
+
+        return new ServerResponse(1);
     }
 
     public function actionUnwatch($id)
     {
-        $response = [];
-
         if ($model = WatchMovie::findOne(['user' => Yii::$app->user->identity->id, 'movie' => $id])) {
-            try {
-                if ($model->delete()) {
-                    $response['message'] = "Success";
-                    $response['error'] = 0;
-                } else {
-                    throw new Exception("Unknown error");
-                }
-            } catch (yii\db\Exception $e) {
-                $response['message'] = "No se han podido guardar los cambios.";
-                $response['db_message'] = $e->getName();
-                $response['error'] = "28";
-            }
-        } else {
-            // -------------------------------------> This can be ignored directly
-            $response['message'] = "Error: No has marcado esta película como vista anteriormente";
-            $response['error'] = "33";
-        }
-
-        return $response;
-    }
-/*
-    public function actionUpdate($id)
-    {
-        $success = false;
-        if ($model = WatchMovie::findOne(['user' => Yii::$app->user->identity->id, 'movie' => $id])) {
-            $model->date = date("Y-m-d H-i-s");
-            if ($model->save()) {
-                $success = true;
+            if (!$model->delete()) {
+                return new ServerResponse(10);
             }
         }
-        return $success;
+        return new ServerResponse(1);
     }
-*/
+
     public function actionScore($id, $score)
     {
         $uid = Yii::$app->user->identity->id;
@@ -152,7 +114,6 @@ class WatchMovieController extends ActiveController
         }
 
         $model->save(false);
-
         return new ServerResponse(1);
     }
 

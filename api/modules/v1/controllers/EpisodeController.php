@@ -298,32 +298,23 @@ class EpisodeController extends ActiveController
     {
         $response = [];
         $comment = [];
-        if ($model = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode])) {
-            if (isset($_POST['content'])) {
-
-                $content = $_POST['content']; // PROCESS THE TEXT CONTAINED HERE
-
-                $comment['title'] = $id;
-                $comment['season_num'] = $season;
-                $comment['episode_num'] = $episode;
-                $comment['content'] = $content;
-                /*
-                if (isset($_POST['answer_to'])) {
-                $comment['answer_to'] = $_POST['answer_to'];
-                }*/
-
-                $response = Yii::$app->controller->module->runAction(
-                    'comment/comment', $comment
-                );
-
-            } else {
-                $response['message'] = "Falta el contenido del comentario";
-                $response['error'] = "53";
-            }
-        } else {
-            $response['message'] = "Error: La película con id $id no existe";
-            $response['error'] = "32";
+        if (!$model = Episode::findOne(['tvshow' => $id, 'season_num' => $season, 'episode_num' => $episode])) {
+            return new ServerResponse(34);
+        } /*
+        if (!isset($_POST['content'])) {
+        return new ServerResponse(5, "content value invalid");
         }
+
+        $content = $_POST['content']; */
+
+        $comment['title'] = $id;
+        $comment['season_num'] = $season;
+        $comment['episode_num'] = $episode;
+        // $comment['content'] = $content;
+
+        $response = Yii::$app->controller->module->runAction(
+            'comment/comment', $comment
+        );
 
         return $response;
     }

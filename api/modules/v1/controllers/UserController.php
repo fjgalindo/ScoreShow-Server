@@ -206,7 +206,7 @@ class UserController extends \yii\rest\ActiveController
         }
 
         if (!$profile_img && !$background_img) {
-            return new ServerResponse(5, "You must upload profile_img or background_img");
+            return new ServerResponse(5, "Missing profile_img or background_img");
         }
 
         return new ServerResponse(1);
@@ -262,14 +262,6 @@ class UserController extends \yii\rest\ActiveController
     {
         $user = Yii::$app->user->identity;
         return $user->followedUsers;
-        /* $following = [];
-    foreach ($user->followUsrs as $key => $value) {
-    if ($value['accepted']) {
-    array_push($following, $this->actionViewModel($value['followed']));
-    }
-    };
-    return $following;
-     */
     }
 
     public function actionFollowedsActivity()

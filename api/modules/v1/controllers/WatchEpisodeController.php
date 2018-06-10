@@ -121,7 +121,6 @@ class WatchEpisodeController extends \yii\rest\ActiveController
         $id_tmdb = $model->episodeModel->tvshowModel->title->id_tmdb;
 
         if (!Yii::$app->TMDb->checkGuestSessionId($gsesid)) {
-            //$user = User::findOne(['tmdb_gtoken' => $gsesid]);
             $user = Yii::$app->user->identity;
             if ($gsesid = Yii::$app->TMDb->generateGuestSessionId()) {
                 $user->tmdb_gtoken = $gsesid;
