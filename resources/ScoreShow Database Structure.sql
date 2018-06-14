@@ -196,7 +196,7 @@ CREATE TRIGGER r2_usr_state_ins BEFORE INSERT ON scoreshow.user
 FOR EACH ROW 
 BEGIN 
     IF
-        NNEW.status <> 0 AND 
+        NEW.status <> 0 AND 
         NEW.status <> 1
     
     THEN
